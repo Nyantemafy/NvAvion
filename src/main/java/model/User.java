@@ -1,5 +1,7 @@
 package model;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 import mg.itu.prom16.Required;
 import mg.itu.prom16.Email;
@@ -26,6 +28,15 @@ public class User {
 
     @Column(nullable = false)
     private String role = "USER";
+
+    @Column(name = "created_at", updatable = false, insertable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", updatable = false, insertable = false)
+    private LocalDateTime updatedAt;
+
+    @Column(name = "is_active")
+    private boolean isActive = true;
 
     // Constructeurs
     public User() {

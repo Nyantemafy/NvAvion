@@ -1,5 +1,14 @@
 {
     "java.project.referencedLibraries": [
-        "lib/**/*.jar"
+        "c:\\Users\\Ny Antema\\OneDrive\\Documents\\devoir\\MrNaina\\Avion\\NvAvion\\lib\\hibernate-core-5.4.30.Final.jar",
+        "c:\\Users\\Ny Antema\\OneDrive\\Documents\\devoir\\MrNaina\\Avion\\NvAvion\\lib\\Meframework.jar",
+        "c:\\Users\\Ny Antema\\OneDrive\\Documents\\devoir\\MrNaina\\Avion\\NvAvion\\lib\\hibernate-entitymanager-5.4.30.Final.jar",
+        "c:\\Users\\Ny Antema\\OneDrive\\Documents\\devoir\\MrNaina\\Avion\\NvAvion\\lib\\gson-2.10.1.jar",
+        "c:\\Users\\Ny Antema\\OneDrive\\Documents\\devoir\\MrNaina\\Avion\\NvAvion\\lib\\jakarta.persistence-api-3.1.0.jar",
+        "c:\\Users\\Ny Antema\\OneDrive\\Documents\\devoir\\MrNaina\\Avion\\NvAvion\\lib\\postgresql-42.5.1.jar",
+        "c:\\Users\\Ny Antema\\OneDrive\\Documents\\devoir\\MrNaina\\Avion\\NvAvion\\lib\\jakarta.servlet-api-6.0.0.jar"
+    ],
+    "java.project.sourcePaths": [
+        "src\\main\\java"
     ]
 }

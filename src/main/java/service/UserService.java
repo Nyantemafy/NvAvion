@@ -7,24 +7,65 @@ import jakarta.persistence.TypedQuery;
 import jakarta.persistence.NoResultException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class UserService {
 
+    public static void testConnection() {
+        try (Connection conn = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/login_db",
+                "postgres",
+                "antema")) {
+            System.out.println("✅ Connexion directe réussie !");
+
+            // Test requête SQL brute
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users");
+            rs.next();
+            System.out.println("Nombre d'utilisateurs : " + rs.getInt(1));
+        } catch (SQLException e) {
+            System.out.println("❌ Échec de connexion :");
+            e.printStackTrace();
+        }
+    }
+
     public User authenticate(String username, String password) {
+        System.out.println("=== Début authenticate ===");
+        System.out.println("username = " + username);
+        System.out.println("password = " + password);
+
         EntityManager em = DatabaseUtil.getEntityManager();
         try {
-            String hashedPassword = hashPassword(password);
+            // 1. D'abord le test COUNT
+            System.out.println("Test simple COUNT...");
+            Long count = em.createQuery("SELECT COUNT(u) FROM User u", Long.class).getSingleResult();
+            System.out.println("Nombre d'utilisateurs en base : " + count);
+
+            // 2. Ensuite la requête d'authentification
             TypedQuery<User> query = em.createQuery(
                     "SELECT u FROM User u WHERE u.username = :username AND u.password = :password",
                     User.class);
             query.setParameter("username", username);
-            query.setParameter("password", hashedPassword);
+            query.setParameter("password", password);
 
-            return query.getSingleResult();
+            System.out.println("Exécution de la requête...");
+            User user = query.getSingleResult();
+            System.out.println("Utilisateur trouvé : " + user);
+            return user;
         } catch (NoResultException e) {
+            System.out.println("Aucun utilisateur trouvé avec ces identifiants !");
+            return null;
+        } catch (Exception e) {
+            System.out.println("Exception inattendue dans authenticate :");
+            e.printStackTrace();
             return null;
         } finally {
-            em.close();
+            em.close(); // On ferme SEULEMENT ici à la fin
+            System.out.println("EntityManager fermé");
         }
     }
 

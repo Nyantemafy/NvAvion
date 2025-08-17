@@ -17,7 +17,7 @@
             <div class="success"><%= request.getAttribute("success") %></div>
         <% } %>
         
-        <form method="post" action="login">
+        <form method="post" action="processLogin">
             <div class="form-group">
                 <label>Nom d'utilisateur:</label>
                 <input type="text" name="user.username" required>

@@ -9,7 +9,7 @@ public class DatabaseUtil {
 
     static {
         try {
-            emf = Persistence.createEntityManagerFactory("loginPU");
+            emf = Persistence.createEntityManagerFactory("AvionPU");
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Erreur d'initialisation de la base de données", e);

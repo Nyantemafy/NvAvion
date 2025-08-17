@@ -13,22 +13,44 @@ public class LoginController {
         return new ModelView("views/login.jsp");
     }
 
-    @POST("login")
-    @AnnotedMth("login")
+    @POST("processLogin")
+    @AnnotedMth("processLogin")
     public ModelView processLogin(@Param(name = "user") User user, CurrentSession session) {
-        User authenticatedUser = userService.authenticate(user.getUsername(), user.getPassword());
+        System.out.println("=== Début processLogin ===");
+        System.out.println("Param user reçu : " + user);
+        System.out.println("CurrentSession : " + session);
+
+        User authenticatedUser = null;
+        try {
+            userService.testConnection();
+            authenticatedUser = userService.authenticate(user.getUsername(), user.getPassword());
+            System.out.println("Résultat authenticate : " + authenticatedUser);
+        } catch (Exception e) {
+            System.out.println("Exception lors de authenticate :");
+            e.printStackTrace();
+        }
 
         if (authenticatedUser != null) {
-            session.add("user", authenticatedUser);
-            session.add("role", authenticatedUser.getRole());
+            try {
+                System.out.println("Ajout de l'utilisateur et du rôle dans la session...");
+                session.add("user", authenticatedUser);
+                session.add("role", authenticatedUser.getRole());
+                System.out.println("Session après ajout : " + session);
+            } catch (Exception e) {
+                System.out.println("Exception lors de session.add :");
+                e.printStackTrace();
+            }
 
             ModelView mv = new ModelView("views/dashboard.jsp");
             mv.addObject("user", authenticatedUser);
             mv.addObject("message", "Connexion réussie !");
+            System.out.println("=== Fin processLogin : connexion réussie ===");
             return mv;
         } else {
+            System.out.println("Échec de l'authentification : utilisateur ou mot de passe incorrect");
             ModelView mv = new ModelView("views/login.jsp");
             mv.addObject("error", "Nom d'utilisateur ou mot de passe incorrect");
+            System.out.println("=== Fin processLogin : retour login.jsp ===");
             return mv;
         }
     }
@@ -38,8 +60,8 @@ public class LoginController {
         return new ModelView("views/register.jsp");
     }
 
-    @POST("register")
-    @AnnotedMth("register")
+    @POST("processRegister")
+    @AnnotedMth("processRegister")
     public ModelView processRegister(@Param(name = "user") User user) {
         if (userService.register(user)) {
             ModelView mv = new ModelView("views/login.jsp");
