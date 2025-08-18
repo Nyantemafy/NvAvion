@@ -49,9 +49,9 @@ public class LoginController {
 
                 System.out.println("✅ Session mise à jour");
 
-                ModelView mv = new ModelView("views/dashboard.jsp");
-                mv.addObject("user", authenticatedUser);
-                mv.addObject("message", "Connexion réussie ! Bienvenue " + authenticatedUser.getUsername());
+                // Rediriger vers la liste des vols après connexion réussie
+                ModelView mv = new ModelView("redirect:/vols");
+                session.add("successMessage", "Connexion réussie ! Bienvenue " + authenticatedUser.getUsername());
 
                 return mv;
 
