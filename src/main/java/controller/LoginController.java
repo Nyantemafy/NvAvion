@@ -3,6 +3,7 @@ package controller;
 import mg.itu.prom16.*;
 import model.User;
 import service.UserService;
+import util.DatabaseUtil;
 
 @AnnotedController
 public class LoginController {
@@ -17,40 +18,55 @@ public class LoginController {
     @AnnotedMth("processLogin")
     public ModelView processLogin(@Param(name = "user") User user, CurrentSession session) {
         System.out.println("=== Début processLogin ===");
-        System.out.println("Param user reçu : " + user);
-        System.out.println("CurrentSession : " + session);
+        System.out.println("Username reçu : " + (user != null ? user.getUsername() : "null"));
+
+        // Test de connexion (optionnel, pour debug)
+        if (!DatabaseUtil.testConnection()) {
+            ModelView mv = new ModelView("views/login.jsp");
+            mv.addObject("error", "Erreur de connexion à la base de données");
+            return mv;
+        }
 
         User authenticatedUser = null;
         try {
-            userService.testConnection();
             authenticatedUser = userService.authenticate(user.getUsername(), user.getPassword());
-            System.out.println("Résultat authenticate : " + authenticatedUser);
         } catch (Exception e) {
             System.out.println("Exception lors de authenticate :");
             e.printStackTrace();
+            ModelView mv = new ModelView("views/login.jsp");
+            mv.addObject("error", "Erreur interne. Consultez les logs.");
+            return mv;
         }
 
         if (authenticatedUser != null) {
             try {
-                System.out.println("Ajout de l'utilisateur et du rôle dans la session...");
+                System.out.println("✅ Authentification réussie pour : " + authenticatedUser.getUsername());
+
+                // Ajout en session
                 session.add("user", authenticatedUser);
                 session.add("role", authenticatedUser.getRole());
-                System.out.println("Session après ajout : " + session);
-            } catch (Exception e) {
-                System.out.println("Exception lors de session.add :");
-                e.printStackTrace();
-            }
+                session.add("userId", authenticatedUser.getId());
 
-            ModelView mv = new ModelView("views/dashboard.jsp");
-            mv.addObject("user", authenticatedUser);
-            mv.addObject("message", "Connexion réussie !");
-            System.out.println("=== Fin processLogin : connexion réussie ===");
-            return mv;
+                System.out.println("✅ Session mise à jour");
+
+                ModelView mv = new ModelView("views/dashboard.jsp");
+                mv.addObject("user", authenticatedUser);
+                mv.addObject("message", "Connexion réussie ! Bienvenue " + authenticatedUser.getUsername());
+
+                return mv;
+
+            } catch (Exception e) {
+                System.out.println("❌ Exception lors de la gestion de session :");
+                e.printStackTrace();
+
+                ModelView mv = new ModelView("views/login.jsp");
+                mv.addObject("error", "Erreur lors de la création de la session");
+                return mv;
+            }
         } else {
-            System.out.println("Échec de l'authentification : utilisateur ou mot de passe incorrect");
+            System.out.println("❌ Échec de l'authentification");
             ModelView mv = new ModelView("views/login.jsp");
             mv.addObject("error", "Nom d'utilisateur ou mot de passe incorrect");
-            System.out.println("=== Fin processLogin : retour login.jsp ===");
             return mv;
         }
     }
@@ -63,38 +79,107 @@ public class LoginController {
     @POST("processRegister")
     @AnnotedMth("processRegister")
     public ModelView processRegister(@Param(name = "user") User user) {
-        if (userService.register(user)) {
-            ModelView mv = new ModelView("views/login.jsp");
-            mv.addObject("success", "Inscription réussie ! Vous pouvez maintenant vous connecter.");
-            return mv;
-        } else {
+        System.out.println("=== Début processRegister ===");
+        System.out.println("Username : " + (user != null ? user.getUsername() : "null"));
+        System.out.println("Email : " + (user != null ? user.getEmail() : "null"));
+
+        try {
+            if (userService.register(user)) {
+                ModelView mv = new ModelView("views/login.jsp");
+                mv.addObject("success",
+                        "Inscription réussie ! Vous pouvez maintenant vous connecter avec vos identifiants.");
+                return mv;
+            } else {
+                ModelView mv = new ModelView("views/register.jsp");
+                mv.addObject("error", "Erreur lors de l'inscription. L'utilisateur ou l'email existe peut-être déjà.");
+                mv.addObject("user", user); // Pour repeupler le formulaire
+                return mv;
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Exception lors de processRegister :");
+            e.printStackTrace();
+
             ModelView mv = new ModelView("views/register.jsp");
-            mv.addObject("error", "Erreur lors de l'inscription. L'utilisateur existe peut-être déjà.");
+            mv.addObject("error", "Erreur interne lors de l'inscription. Consultez les logs.");
+            mv.addObject("user", user);
             return mv;
         }
     }
 
     @AnnotedMth("logout")
     public ModelView logout(CurrentSession session) {
-        session.delete("user");
-        session.delete("role");
+        System.out.println("=== Début logout ===");
 
-        ModelView mv = new ModelView("views/login.jsp");
-        mv.addObject("message", "Déconnexion réussie !");
-        return mv;
+        try {
+            // Récupérer le nom d'utilisateur avant de supprimer la session
+            User user = (User) session.get("user");
+            String username = (user != null) ? user.getUsername() : "Utilisateur inconnu";
+
+            // Nettoyer la session
+            session.delete("user");
+            session.delete("role");
+            session.delete("userId");
+
+            System.out.println("✅ Session nettoyée pour : " + username);
+
+            ModelView mv = new ModelView("views/login.jsp");
+            mv.addObject("message", "Déconnexion réussie ! À bientôt.");
+            return mv;
+
+        } catch (Exception e) {
+            System.out.println("❌ Erreur lors du logout :");
+            e.printStackTrace();
+
+            // Même en cas d'erreur, on redirige vers login
+            ModelView mv = new ModelView("views/login.jsp");
+            mv.addObject("message", "Déconnexion effectuée.");
+            return mv;
+        }
     }
 
     @AnnotedMth("dashboard")
     public ModelView dashboard(CurrentSession session) {
-        User user = (User) session.get("user");
-        if (user == null) {
+        System.out.println("=== Accès au dashboard ===");
+
+        try {
+            User user = (User) session.get("user");
+
+            if (user == null) {
+                System.out.println("❌ Aucun utilisateur en session");
+                ModelView mv = new ModelView("views/login.jsp");
+                mv.addObject("error", "Vous devez vous connecter d'abord");
+                return mv;
+            }
+
+            System.out.println("✅ Dashboard pour : " + user.getUsername());
+
+            ModelView mv = new ModelView("views/dashboard.jsp");
+            mv.addObject("user", user);
+            mv.addObject("message", "Bienvenue sur votre tableau de bord !");
+            return mv;
+
+        } catch (Exception e) {
+            System.out.println("❌ Erreur dans dashboard :");
+            e.printStackTrace();
+
             ModelView mv = new ModelView("views/login.jsp");
-            mv.addObject("error", "Vous devez vous connecter d'abord");
+            mv.addObject("error", "Erreur d'accès au dashboard. Veuillez vous reconnecter.");
             return mv;
         }
+    }
 
-        ModelView mv = new ModelView("views/dashboard.jsp");
-        mv.addObject("user", user);
+    // Méthode utilitaire pour debug (optionnel)
+    @AnnotedMth("dbinfo")
+    public ModelView showDatabaseInfo() {
+        DatabaseUtil.printConnectionInfo();
+        boolean connectionOk = DatabaseUtil.testConnection();
+
+        ModelView mv = new ModelView("views/login.jsp");
+        if (connectionOk) {
+            mv.addObject("message", "Base de données accessible ✅");
+        } else {
+            mv.addObject("error", "Problème de connexion à la base ❌");
+        }
         return mv;
     }
 }

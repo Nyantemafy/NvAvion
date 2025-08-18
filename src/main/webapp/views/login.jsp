@@ -3,7 +3,7 @@
 <html>
 <head>
     <title>Login</title>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/Nyantemafy/aero-css@master/style.css">
 </head>
 <body>
     <div class="login-container">
