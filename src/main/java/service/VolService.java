@@ -188,31 +188,35 @@ public class VolService {
      * Créer un nouveau vol
      */
     public boolean createVol(Vol vol) {
-        if (vol == null || vol.getNumeroVol() == null || vol.getDateVol() == null) {
-            System.out.println("❌ Données de vol invalides");
+        if (vol == null || vol.getNumeroVol() == null || vol.getDateVol() == null
+                || vol.getIdVille() == null) {
+            System.out.println("❌ Données de vol invalides: " + vol);
             return false;
         }
 
         try {
             String query = "INSERT INTO vol (numero_vol_, date_vol_, id_ville, id_avion) VALUES (?, ?, ?, ?)";
-            long generatedId = DatabaseUtil.executeInsertWithGeneratedKey(
-                    query,
+            Object[] params = {
                     vol.getNumeroVol(),
                     Timestamp.valueOf(vol.getDateVol()),
                     vol.getIdVille(),
-                    vol.getIdAvion());
+                    vol.getIdAvion() != null ? vol.getIdAvion() : null
+            };
+
+            long generatedId = DatabaseUtil.executeInsertWithGeneratedKey(query, params);
 
             if (generatedId > 0) {
                 vol.setIdVol(generatedId);
                 System.out.println("✅ Vol créé avec succès (ID: " + generatedId + ")");
+
+                // ➕ Insérer aussi les prix dans prix_siege_vol_
+                createOrUpdatePrixSiegeVol(generatedId, vol.getPrixMin(), vol.getPrixMax());
                 return true;
             }
-
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la création du vol:");
+            System.err.println("❌ Erreur SQL lors de la création du vol:");
             e.printStackTrace();
         }
-
         return false;
     }
 
@@ -237,6 +241,9 @@ public class VolService {
 
             if (rowsAffected > 0) {
                 System.out.println("✅ Vol mis à jour avec succès");
+
+                // ➕ Mettre à jour aussi les prix associés
+                createOrUpdatePrixSiegeVol(vol.getIdVol(), vol.getPrixMin(), vol.getPrixMax());
                 return true;
             } else {
                 System.out.println("❌ Aucun vol trouvé avec l'ID " + vol.getIdVol());
@@ -248,6 +255,43 @@ public class VolService {
         }
 
         return false;
+    }
+
+    /**
+     * Insère ou met à jour les prix dans prix_siege_vol_
+     */
+    private void createOrUpdatePrixSiegeVol(Long idVol, BigDecimal prixMin, BigDecimal prixMax) throws SQLException {
+        if (idVol == null)
+            return;
+
+        // Supposons que Id_type_siege = 1 (Éco) et 2 (Business)
+        if (prixMin != null) {
+            upsertPrixSiege(idVol, 1, prixMin);
+        }
+        if (prixMax != null) {
+            upsertPrixSiege(idVol, 2, prixMax);
+        }
+    }
+
+    /**
+     * Met à jour si déjà existant, sinon insère
+     */
+    private void upsertPrixSiege(Long idVol, int idTypeSiege, BigDecimal prix) throws SQLException {
+        // Vérifier si une ligne existe déjà
+        String checkQuery = "SELECT COUNT(*) FROM prix_siege_vol_ WHERE id_vol = ? AND id_type_siege = ?";
+        long count = DatabaseUtil.executeCount(checkQuery, idVol, idTypeSiege);
+
+        if (count > 0) {
+            // Update
+            String updateQuery = "UPDATE prix_siege_vol_ SET prix_ = ? WHERE id_vol = ? AND id_type_siege = ?";
+            DatabaseUtil.executeUpdate(updateQuery, prix, idVol, idTypeSiege);
+            System.out.println("🔄 Prix mis à jour (Vol " + idVol + ", Type " + idTypeSiege + ")");
+        } else {
+            // Insert
+            String insertQuery = "INSERT INTO prix_siege_vol_ (prix_, id_type_siege, id_vol) VALUES (?, ?, ?)";
+            DatabaseUtil.executeUpdate(insertQuery, prix, idTypeSiege, idVol);
+            System.out.println("➕ Prix inséré (Vol " + idVol + ", Type " + idTypeSiege + ")");
+        }
     }
 
     /**

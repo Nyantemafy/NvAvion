@@ -144,7 +144,15 @@ public class VolController {
      */
     @POST("createVol")
     @AnnotedMth("createVol")
-    public ModelView createVol(@Param(name = "vol") Vol vol, CurrentSession session) {
+    public ModelView createVol(
+            @Param(name = "numeroVol") String numeroVol,
+            @Param(name = "dateVol") String dateVolStr,
+            @Param(name = "idVille") String idVilleStr,
+            @Param(name = "idAvion") String idAvionStr,
+            @Param(name = "prixMin") String prixMinStr,
+            @Param(name = "prixMax") String prixMaxStr,
+            CurrentSession session) {
+
         User user = (User) session.get("user");
         if (user == null || !"ADMIN".equals(user.getRole())) {
             ModelView mv = new ModelView("views/login.jsp");
@@ -152,42 +160,95 @@ public class VolController {
             return mv;
         }
 
-        System.out.println("=== Création d'un nouveau vol ===");
-        System.out.println("Vol reçu: " + vol.getNumeroVol());
-
         try {
+            // Conversion des paramètres
+            LocalDateTime dateVol = LocalDateTime.parse(dateVolStr.replace(" ", "T"));
+            Long idVille = parseLongSafe(idVilleStr);
+            Long idAvion = parseLongSafe(idAvionStr);
+            BigDecimal prixMin = parseBigDecimalSafe(prixMinStr);
+            BigDecimal prixMax = parseBigDecimalSafe(prixMaxStr);
+
+            // Validation des champs obligatoires
+            if (idVille == null) {
+                throw new IllegalArgumentException("La ville de destination est obligatoire");
+            }
+
+            // Création de l'objet Vol
+            Vol vol = new Vol();
+            vol.setNumeroVol(numeroVol);
+            vol.setDateVol(dateVol);
+            vol.setIdVille(idVille);
+            vol.setIdAvion(idAvion); // Peut être null
+            vol.setPrixMin(prixMin); // Peut être null
+            vol.setPrixMax(prixMax); // Peut être null
+
             if (volService.createVol(vol)) {
                 ModelView mv = new ModelView("vols");
                 session.add("successMessage", "Vol créé avec succès !");
                 return mv;
             } else {
-                List<Ville> villes = volService.findAllVilles();
-                List<Avion> avions = volService.findAllAvions();
-
-                ModelView mv = new ModelView("views/vols/create.jsp");
-                mv.addObject("user", user);
-                mv.addObject("villes", villes);
-                mv.addObject("avions", avions);
-                mv.addObject("vol", vol);
-                mv.addObject("error", "Erreur lors de la création du vol");
-                return mv;
+                throw new Exception("Échec de la création en base de données");
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la création du vol:");
-            e.printStackTrace();
-
-            List<Ville> villes = volService.findAllVilles();
-            List<Avion> avions = volService.findAllAvions();
-
-            ModelView mv = new ModelView("views/vols/create.jsp");
-            mv.addObject("user", user);
-            mv.addObject("villes", villes);
-            mv.addObject("avions", avions);
-            mv.addObject("vol", vol);
-            mv.addObject("error", "Erreur interne lors de la création");
-            return mv;
+            return reloadCreateFormWithError(session,
+                    "Erreur: " + e.getMessage(),
+                    numeroVol, dateVolStr, idVilleStr, idAvionStr);
         }
+    }
+
+    // Méthodes utilitaires
+    private Long parseLongSafe(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private BigDecimal parseBigDecimalSafe(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private ModelView reloadCreateFormWithError(CurrentSession session,
+            String errorMessage,
+            String numeroVol,
+            String dateVol,
+            String idVille,
+            String idAvion) {
+        User user = (User) session.get("user");
+        List<Ville> villes = volService.findAllVilles();
+        List<Avion> avions = volService.findAllAvions();
+
+        // Créer un objet Vol partiel pour pré-remplir le formulaire
+        Vol vol = new Vol();
+        vol.setNumeroVol(numeroVol);
+        // Note: Les autres champs ne sont pas settés car non utilisés dans le
+        // formulaire
+
+        ModelView mv = new ModelView("views/vols/create.jsp");
+        mv.addObject("user", user);
+        mv.addObject("villes", villes);
+        mv.addObject("avions", avions);
+        mv.addObject("vol", vol);
+        mv.addObject("error", errorMessage);
+
+        // Ajouter les valeurs brutes pour les champs non mappés à l'objet Vol
+        mv.addObject("rawDateVol", dateVol);
+        mv.addObject("rawIdVille", idVille);
+        mv.addObject("rawIdAvion", idAvion);
+
+        return mv;
     }
 
     /**

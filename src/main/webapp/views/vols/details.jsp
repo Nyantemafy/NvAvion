@@ -23,7 +23,7 @@
                 <p>Connecté en tant que <strong><%= user.getUsername() %></strong> 
                    (<%= user.getRole() %>) | 
                    <a href="vols">Retour à la liste</a> | 
-                   <a href="dashboard">Tableau de bord</a>
+                   <a href="reservation">Allez reservez</a>
                 </p>
             </div>
         </div>

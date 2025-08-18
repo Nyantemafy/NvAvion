@@ -263,6 +263,38 @@ public class DatabaseUtil {
     }
 
     /**
+     * Exécuter une requête COUNT(*) et retourner le résultat
+     *
+     * @param query  - La requête SQL avec des ?
+     * @param params - Les paramètres pour remplacer les ?
+     * @return long - Résultat du COUNT, ou 0 si rien trouvé
+     */
+    public static long executeCount(String query, Object... params) throws SQLException {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = getConnection();
+            stmt = conn.prepareStatement(query);
+
+            // Remplacer les ?
+            for (int i = 0; i < params.length; i++) {
+                stmt.setObject(i + 1, params[i]);
+            }
+
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+            return 0;
+
+        } finally {
+            closeAll(conn, stmt, rs);
+        }
+    }
+
+    /**
      * Obtenir les informations de configuration (pour debug)
      */
     public static void printConnectionInfo() {

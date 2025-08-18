@@ -2,6 +2,7 @@
 <%@ page import="model.User" %>
 <%@ page import="model.Ville" %>
 <%@ page import="model.Avion" %>
+<%@ page import="model.Vol" %>
 <%@ page import="java.util.List" %>
 <!DOCTYPE html>
 <html>
@@ -25,7 +26,7 @@
                 <h1>✈️ Créer un Nouveau Vol</h1>
                 <p>Connecté en tant que <strong><%= user.getUsername() %></strong> (ADMIN) | 
                    <a href="vols">Retour à la liste</a> | 
-                   <a href="dashboard">Tableau de bord</a>
+                   <a href="reservation">Allez reservez</a>
                 </p>
             </div>
         </div>
@@ -40,15 +41,15 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="numeroVol">Numéro de vol *</label>
-                        <input type="text" id="numeroVol" name="vol.numeroVol" 
-                               value="<%= vol != null && vol.getNumeroVol() != null ? vol.getNumeroVol() : "" %>" 
-                               required pattern="[A-Z]{2}\d{3,4}" 
-                               title="2 lettres suivies de 3-4 chiffres (ex: AF123)">
+                        <input type="text" id="numeroVol" name="numeroVol" 
+                            value="<%= vol != null && vol.getNumeroVol() != null ? vol.getNumeroVol() : "" %>" 
+                            required pattern="[A-Z]{2}\d{3,4}" 
+                            title="2 lettres suivies de 3-4 chiffres (ex: AF123)">
                     </div>
 
                     <div class="form-group">
                         <label for="dateVol">Date & Heure *</label>
-                        <input type="datetime-local" id="dateVol" name="vol.dateVol" required>
+                        <input type="datetime-local" id="dateVol" name="dateVol" required>
                     </div>
                 </div>
             </div>
@@ -58,7 +59,7 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="idVille">Ville de destination *</label>
-                        <select id="idVille" name="vol.idVille" required>
+                        <select id="idVille" name="idVille" required>
                             <option value="">-- Sélectionnez --</option>
                             <% for (Ville ville : villes) { %>
                                 <option value="<%= ville.getIdVille() %>"
@@ -71,7 +72,7 @@
 
                     <div class="form-group">
                         <label for="idAvion">Avion *</label>
-                        <select id="idAvion" name="vol.idAvion" required>
+                        <select id="idAvion" name="idAvion" required>
                             <option value="">-- Sélectionnez --</option>
                             <% for (Avion avion : avions) { %>
                                 <option value="<%= avion.getIdAvion() %>"
@@ -90,14 +91,14 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="prixMin">Prix minimum (€)</label>
-                        <input type="number" id="prixMin" name="vol.prixMin" step="0.01"
-                               value="<%= vol != null && vol.getPrixMin() != null ? vol.getPrixMin() : "" %>">
+                        <input type="number" id="prixMin" name="prixMin" step="0.01"
+                            value="<%= vol != null && vol.getPrixMin() != null ? vol.getPrixMin() : "" %>">
                     </div>
 
                     <div class="form-group">
                         <label for="prixMax">Prix maximum (€)</label>
-                        <input type="number" id="prixMax" name="vol.prixMax" step="0.01"
-                               value="<%= vol != null && vol.getPrixMax() != null ? vol.getPrixMax() : "" %>">
+                        <input type="number" id="prixMax" name="prixMax" step="0.01"
+                            value="<%= vol != null && vol.getPrixMax() != null ? vol.getPrixMax() : "" %>">
                     </div>
                 </div>
             </div>
