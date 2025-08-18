@@ -1,0 +1,139 @@
+/* Bouton Ajout Vol */
+.btn-add-flight {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #0066cc, #004d99);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+}
+
+.btn-add-flight:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
+    background: linear-gradient(135deg, #004d99, #0066cc);
+}
+
+.btn-add-flight .btn-icon {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+/* Formulaire de création */
+.flight-form {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e1e8ed;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.form-section {
+    margin-bottom: 30px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.form-section h2 {
+    color: #003366;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 22px;
+    position: relative;
+    padding-left: 30px;
+}
+
+.form-section h2::before {
+    content: "✈";
+    position: absolute;
+    left: 0;
+    opacity: 0.7;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    color: #4d4d4d;
+    font-weight: 500;
+    font-size: 0.95em;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #d1e0ff;
+    border-radius: 6px;
+    font-size: 1em;
+    background-color: #f5f9ff;
+    transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 40px;
+}
+
+.btn-submit-flight {
+    display: inline-flex;
+    align-items: center;
+    padding: 14px 25px;
+    background: linear-gradient(135deg, #00802b, #006622);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-submit-flight:hover {
+    background: linear-gradient(135deg, #006622, #00802b);
+    transform: translateY(-2px);
+}
+
+.btn-submit-flight .btn-icon {
+    margin-right: 10px;
+    font-size: 1.1em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+}

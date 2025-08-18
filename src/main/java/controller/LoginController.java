@@ -50,7 +50,7 @@ public class LoginController {
                 System.out.println("✅ Session mise à jour");
 
                 // Rediriger vers la liste des vols après connexion réussie
-                ModelView mv = new ModelView("redirect:/vols");
+                ModelView mv = new ModelView("vols");
                 session.add("successMessage", "Connexion réussie ! Bienvenue " + authenticatedUser.getUsername());
 
                 return mv;
@@ -133,37 +133,6 @@ public class LoginController {
             // Même en cas d'erreur, on redirige vers login
             ModelView mv = new ModelView("views/login.jsp");
             mv.addObject("message", "Déconnexion effectuée.");
-            return mv;
-        }
-    }
-
-    @AnnotedMth("dashboard")
-    public ModelView dashboard(CurrentSession session) {
-        System.out.println("=== Accès au dashboard ===");
-
-        try {
-            User user = (User) session.get("user");
-
-            if (user == null) {
-                System.out.println("❌ Aucun utilisateur en session");
-                ModelView mv = new ModelView("views/login.jsp");
-                mv.addObject("error", "Vous devez vous connecter d'abord");
-                return mv;
-            }
-
-            System.out.println("✅ Dashboard pour : " + user.getUsername());
-
-            ModelView mv = new ModelView("views/dashboard.jsp");
-            mv.addObject("user", user);
-            mv.addObject("message", "Bienvenue sur votre tableau de bord !");
-            return mv;
-
-        } catch (Exception e) {
-            System.out.println("❌ Erreur dans dashboard :");
-            e.printStackTrace();
-
-            ModelView mv = new ModelView("views/login.jsp");
-            mv.addObject("error", "Erreur d'accès au dashboard. Veuillez vous reconnecter.");
             return mv;
         }
     }

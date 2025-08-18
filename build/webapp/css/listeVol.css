@@ -1,0 +1,236 @@
+/* === Styles généraux === */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 102, 204, 0.1);
+}
+
+/* === En-tête === */
+.header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.header-actions h1 {
+    color: #003366;
+    margin: 0;
+    font-size: 28px;
+}
+
+.header-actions p {
+    color: #4d4d4d;
+    margin-top: 5px;
+}
+
+.header-actions a {
+    color: #0066cc;
+    text-decoration: none;
+    margin-right: 10px;
+}
+
+.header-actions a:hover {
+    text-decoration: underline;
+}
+
+/* === Boutons === */
+.btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background-color: #0066cc;
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #004d99;
+}
+
+.btn-secondary {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+.btn-secondary:hover {
+    background-color: #e0e0e0;
+}
+
+/* === Messages === */
+.success-message {
+    background-color: #e6f7e6;
+    color: #00802b;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #00802b;
+}
+
+.error-message {
+    background-color: #ffebeb;
+    color: #cc0000;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #cc0000;
+}
+
+/* === Filtres === */
+.filters-container {
+    background-color: #f5f9ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    border: 1px solid #d1e0ff;
+}
+
+.filters-container h3 {
+    color: #003366;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #4d4d4d;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #b3c6e0;
+    border-radius: 4px;
+    background-color: #f5f9ff;
+}
+
+/* === Tableau des vols === */
+.vol-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.vol-table th {
+    background-color: #0066cc;
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
+
+.vol-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.vol-table tr:hover {
+    background-color: #f5f9ff;
+}
+
+/* === Badges et indicateurs === */
+.price-range {
+    font-weight: bold;
+    color: #00802b;
+}
+
+.promotion-badge {
+    background-color: #ffeb99;
+    color: #996600;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.9em;
+    display: inline-block;
+}
+
+/* === Boutons d'action === */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-small {
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 0.85em;
+    text-decoration: none;
+}
+
+.btn-view {
+    background-color: #e6f2ff;
+    color: #0066cc;
+}
+
+.btn-edit {
+    background-color: #fff0e6;
+    color: #cc6600;
+}
+
+.btn-delete {
+    background-color: #ffebeb;
+    color: #cc0000;
+    border: none;
+    cursor: pointer;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+    .header-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+
+/* === Effets aéronautiques === */
+.vol-table th {
+    position: relative;
+}
+
+.vol-table th::after {
+    content: "✈";
+    position: absolute;
+    right: 10px;
+    opacity: 0.3;
+}
+
+.form-group select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230066cc'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    appearance: none;
+    padding-right: 30px;
+}

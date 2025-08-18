@@ -1,0 +1,155 @@
+/* === Détails du vol === */
+.vol-details-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+@media (max-width: 1000px) {
+    .vol-details-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.vol-details-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    border: 1px solid #e1e8ed;
+}
+
+.vol-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.vol-details-header h2 {
+    color: #003366;
+    margin: 0;
+    font-size: 24px;
+}
+
+.vol-status {
+    background-color: #e6f7e6;
+    color: #00802b;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.vol-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.detail-group {
+    margin-bottom: 20px;
+}
+
+.detail-group h3 {
+    color: #0066cc;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    border-bottom: 1px dashed #b3c6e0;
+    padding-bottom: 5px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.detail-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: #333;
+    text-align: right;
+}
+
+.price-final {
+    font-weight: bold;
+    color: #00802b;
+    font-size: 1.1em;
+}
+
+/* Carte du vol */
+.vol-map-container {
+    position: relative;
+}
+
+.map-placeholder {
+    height: 100%;
+    min-height: 300px;
+    background-color: #f0f7ff;
+    border-radius: 8px;
+    border: 1px dashed #b3c6e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%23b3c6e0"><path d="M50 10c-15 0-30 15-30 30 0 25 30 50 30 50s30-25 30-50c0-15-15-30-30-30zm0 15c8 0 15 7 15 15s-7 15-15 15-15-7-15-15 7-15 15-15z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100px;
+}
+
+.map-overlay {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    max-width: 80%;
+}
+
+.map-overlay h3 {
+    color: #003366;
+    margin-top: 0;
+}
+
+/* Actions */
+.vol-actions {
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding-top: 20px;
+    border-top: 1px solid #e1e8ed;
+}
+
+.btn-danger {
+    background-color: #ffebeb;
+    color: #cc0000;
+    border: 1px solid #ffb3b3;
+}
+
+.btn-danger:hover {
+    background-color: #ffd6d6;
+}
+
+/* Animation pour l'avion */
+@keyframes fly {
+    0% { transform: translateX(-50px) rotate(0deg); }
+    100% { transform: translateX(calc(100% + 50px)) rotate(5deg); }
+}
+
+.vol-details-card::after {
+    content: "✈";
+    position: absolute;
+    font-size: 24px;
+    color: #0066cc;
+    opacity: 0.1;
+    animation: fly 15s linear infinite;
+    pointer-events: none;
+}

@@ -3,12 +3,9 @@ package controller;
 import mg.itu.prom16.*;
 import model.*;
 import service.VolService;
-import service.UserService;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @AnnotedController
 public class VolController {
@@ -160,7 +157,7 @@ public class VolController {
 
         try {
             if (volService.createVol(vol)) {
-                ModelView mv = new ModelView("redirect:/vols");
+                ModelView mv = new ModelView("vols");
                 session.add("successMessage", "Vol créé avec succès !");
                 return mv;
             } else {
@@ -210,7 +207,7 @@ public class VolController {
             Vol vol = volService.findVolById(id);
 
             if (vol == null) {
-                ModelView mv = new ModelView("redirect:/vols");
+                ModelView mv = new ModelView("vols");
                 session.add("errorMessage", "Vol non trouvé");
                 return mv;
             }
@@ -226,14 +223,14 @@ public class VolController {
             return mv;
 
         } catch (NumberFormatException e) {
-            ModelView mv = new ModelView("redirect:/vols");
+            ModelView mv = new ModelView("vols");
             session.add("errorMessage", "ID de vol invalide");
             return mv;
         } catch (Exception e) {
             System.err.println("❌ Erreur lors du chargement du formulaire de modification:");
             e.printStackTrace();
 
-            ModelView mv = new ModelView("redirect:/vols");
+            ModelView mv = new ModelView("vols");
             session.add("errorMessage", "Erreur lors du chargement du formulaire");
             return mv;
         }
@@ -244,7 +241,24 @@ public class VolController {
      */
     @POST("updateVol")
     @AnnotedMth("updateVol")
-    public ModelView updateVol(@Param(name = "vol") Vol vol, CurrentSession session) {
+    public ModelView updateVol(
+            @Param(name = "id") String idStr,
+            @Param(name = "numeroVol") String numeroVol,
+            @Param(name = "dateVol") String dateVolStr,
+            @Param(name = "idVille") String idVilleStr,
+            @Param(name = "idAvion") String idAvionStr,
+            @Param(name = "prixMin") String prixMinStr,
+            @Param(name = "prixMax") String prixMaxStr,
+            CurrentSession session) {
+        System.out.println("Paramètres reçus:");
+        System.out.println("id: " + idStr);
+        System.out.println("numeroVol: " + numeroVol);
+        System.out.println("dateVol: " + dateVolStr);
+        System.out.println("idVille: " + idVilleStr);
+        System.out.println("idAvion: " + idAvionStr);
+        System.out.println("prixMin: " + prixMinStr);
+        System.out.println("prixMax: " + prixMaxStr);
+
         User user = (User) session.get("user");
         if (user == null || !"ADMIN".equals(user.getRole())) {
             ModelView mv = new ModelView("views/login.jsp");
@@ -252,30 +266,45 @@ public class VolController {
             return mv;
         }
 
-        System.out.println("=== Mise à jour du vol ID: " + vol.getIdVol() + " ===");
-
         try {
+            // Conversion des paramètres
+            Long id = Long.parseLong(idStr);
+            LocalDateTime dateVol = LocalDateTime.parse(dateVolStr.replace(" ", "T"));
+            Long idVille = idVilleStr != null && !idVilleStr.isEmpty() ? Long.parseLong(idVilleStr) : null;
+            Long idAvion = idAvionStr != null && !idAvionStr.isEmpty() ? Long.parseLong(idAvionStr) : null;
+            BigDecimal prixMin = prixMinStr != null && !prixMinStr.isEmpty() ? new BigDecimal(prixMinStr) : null;
+            BigDecimal prixMax = prixMaxStr != null && !prixMaxStr.isEmpty() ? new BigDecimal(prixMaxStr) : null;
+
+            // Création de l'objet Vol
+            Vol vol = new Vol();
+            vol.setIdVol(id);
+            vol.setNumeroVol(numeroVol);
+            vol.setDateVol(dateVol);
+            vol.setIdVille(idVille);
+            vol.setIdAvion(idAvion);
+            vol.setPrixMin(prixMin);
+            vol.setPrixMax(prixMax);
+
             if (volService.updateVol(vol)) {
-                ModelView mv = new ModelView("redirect:/vols");
+                ModelView mv = new ModelView("vols");
                 session.add("successMessage", "Vol mis à jour avec succès !");
                 return mv;
             } else {
-                List<Ville> villes = volService.findAllVilles();
-                List<Avion> avions = volService.findAllAvions();
-
-                ModelView mv = new ModelView("views/vols/edit.jsp");
-                mv.addObject("user", user);
-                mv.addObject("vol", vol);
-                mv.addObject("villes", villes);
-                mv.addObject("avions", avions);
-                mv.addObject("error", "Erreur lors de la mise à jour du vol");
-                return mv;
+                throw new Exception("Échec de la mise à jour");
             }
 
+        } catch (NumberFormatException e) {
+            // Gestion spécifique des erreurs de conversion numérique
+            ModelView mv = new ModelView("vols");
+            session.add("errorMessage", "Format numérique invalide");
+            return mv;
         } catch (Exception e) {
             System.err.println("❌ Erreur lors de la mise à jour du vol:");
             e.printStackTrace();
 
+            // Récupération des données pour réafficher le formulaire
+            Long id = Long.parseLong(idStr);
+            Vol vol = volService.findVolById(id);
             List<Ville> villes = volService.findAllVilles();
             List<Avion> avions = volService.findAllAvions();
 
@@ -284,7 +313,7 @@ public class VolController {
             mv.addObject("vol", vol);
             mv.addObject("villes", villes);
             mv.addObject("avions", avions);
-            mv.addObject("error", "Erreur interne lors de la mise à jour");
+            mv.addObject("error", "Erreur lors de la mise à jour: " + e.getMessage());
             return mv;
         }
     }
@@ -320,7 +349,7 @@ public class VolController {
             session.add("errorMessage", "Erreur interne lors de la suppression");
         }
 
-        return new ModelView("redirect:/vols");
+        return new ModelView("vols");
     }
 
     /**
@@ -340,7 +369,7 @@ public class VolController {
             Vol vol = volService.findVolById(id);
 
             if (vol == null) {
-                ModelView mv = new ModelView("redirect:/vols");
+                ModelView mv = new ModelView("vols");
                 session.add("errorMessage", "Vol non trouvé");
                 return mv;
             }
@@ -351,14 +380,14 @@ public class VolController {
             return mv;
 
         } catch (NumberFormatException e) {
-            ModelView mv = new ModelView("redirect:/vols");
+            ModelView mv = new ModelView("vols");
             session.add("errorMessage", "ID de vol invalide");
             return mv;
         } catch (Exception e) {
             System.err.println("❌ Erreur lors de l'affichage des détails:");
             e.printStackTrace();
 
-            ModelView mv = new ModelView("redirect:/vols");
+            ModelView mv = new ModelView("vols");
             session.add("errorMessage", "Erreur lors du chargement des détails");
             return mv;
         }
