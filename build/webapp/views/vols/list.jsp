@@ -32,7 +32,7 @@
                 <h1>🛫 Gestion des Vols</h1>
                 <p>Bienvenue, <strong><%= user.getUsername() %></strong> 
                    (<%= user.getRole() %>) | 
-                   <a href="dashboard">Tableau de bord</a> | 
+                   <a href="reservations">Allez reservez</a> | 
                    <a href="logout">Déconnexion</a>
                 </p>
             </div>

@@ -26,7 +26,7 @@
                 <h1>✈️ Créer un Nouveau Vol</h1>
                 <p>Connecté en tant que <strong><%= user.getUsername() %></strong> (ADMIN) | 
                    <a href="vols">Retour à la liste</a> | 
-                   <a href="reservation">Allez reservez</a>
+                   <a href="reservations">Allez reservez</a>
                 </p>
             </div>
         </div>

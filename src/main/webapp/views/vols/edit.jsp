@@ -27,7 +27,7 @@
                 <h1>✏️ Modifier Vol <%= vol.getNumeroVol() %></h1>
                 <p>Connecté en tant que <strong><%= user.getUsername() %></strong> (ADMIN) | 
                    <a href="vols">Retour à la liste</a> | 
-                   <a href="reservation">Allez reservez</a>
+                   <a href="reservations">Allez reservez</a>
                 </p>
             </div>
         </div>

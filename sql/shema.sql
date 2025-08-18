@@ -69,6 +69,19 @@ CREATE TABLE promotion(
    FOREIGN KEY(Id_vol) REFERENCES vol(Id_vol)
 );
 
+CREATE TABLE reservation(
+   Id_reservation SERIAL,
+   date_reservation_ TIMESTAMP,
+   prix_total_ NUMERIC(15,2)  ,
+   Id_vol INTEGER NOT NULL,
+   Id_user INTEGER,
+   siege_business INTEGER,
+   siege_eco INTEGER,
+   PRIMARY KEY(Id_reservation),
+   FOREIGN KEY(Id_vol) REFERENCES vol(Id_vol),
+   FOREIGN KEY(Id_user) REFERENCES users(id)
+);
+
 CREATE TABLE prix_siege_vol_(
    Id_prix_siege_vol_ SERIAL,
    prix_ NUMERIC(15,2)  ,
@@ -78,3 +91,21 @@ CREATE TABLE prix_siege_vol_(
    FOREIGN KEY(Id_type_siege) REFERENCES type_siege(Id_type_siege),
    FOREIGN KEY(Id_vol) REFERENCES vol(Id_vol)
 );
+
+CREATE TABLE reservation(
+   Id_reservation SERIAL,
+   date_reservation_ TIMESTAMP,
+   prix_total_ NUMERIC(15,2),
+   Id_vol INTEGER NOT NULL,
+   Id_user INTEGER,
+   siege_business INTEGER,
+   siege_eco INTEGER,
+   PRIMARY KEY(Id_reservation),
+   FOREIGN KEY(Id_vol) REFERENCES vol(Id_vol),
+   FOREIGN KEY(Id_user) REFERENCES users(id)
+);
+
+-- Index pour améliorer les performances
+CREATE INDEX idx_reservation_vol ON reservation(Id_vol);
+CREATE INDEX idx_reservation_user ON reservation(Id_user);
+CREATE INDEX idx_reservation_date ON reservation(date_reservation_);
