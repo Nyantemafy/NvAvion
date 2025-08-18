@@ -33,6 +33,7 @@ public class ReservationController {
         try {
             // Récupérer toutes les réservations
             List<Reservation> reservations = reservationService.findAllReservations();
+            System.out.println(reservations);
 
             // Récupérer les données pour les filtres
             List<Vol> vols = volService.findAllVols();
@@ -196,6 +197,7 @@ public class ReservationController {
             if (success) {
                 ModelView mv = new ModelView("views/reservations/detail.jsp");
                 mv.addObject("reservation", reservation);
+                mv.addObject("user", user);
                 mv.addObject("success", "Réservation créée avec succès !");
                 return mv;
             } else {

@@ -36,67 +36,58 @@ public class ReservationService {
             queryBuilder.append("LEFT JOIN avion a ON v.id_avion = a.id_avion ");
             queryBuilder.append("WHERE 1=1 ");
 
-            // Filtre par numéro de vol
-            if (filter.getNumeroVol() != null && !filter.getNumeroVol().trim().isEmpty()) {
-                queryBuilder.append("AND LOWER(v.numero_vol_) LIKE LOWER(?) ");
-                params.add("%" + filter.getNumeroVol().trim() + "%");
-            }
-
-            // Filtre par ville de destination
-            if (filter.getVilleDestination() != null && !filter.getVilleDestination().trim().isEmpty()) {
-                queryBuilder.append("AND LOWER(vi.nom) LIKE LOWER(?) ");
-                params.add("%" + filter.getVilleDestination().trim() + "%");
-            }
-
-            // Filtre par utilisateur
-            if (filter.getUsername() != null && !filter.getUsername().trim().isEmpty()) {
-                queryBuilder.append("AND LOWER(u.username) LIKE LOWER(?) ");
-                params.add("%" + filter.getUsername().trim() + "%");
-            }
-
-            // Filtre par prix
-            if (filter.getPrixMin() != null) {
-                queryBuilder.append("AND r.prix_total_ >= ? ");
-                params.add(filter.getPrixMin());
-            }
-
-            if (filter.getPrixMax() != null) {
-                queryBuilder.append("AND r.prix_total_ <= ? ");
-                params.add(filter.getPrixMax());
-            }
-
-            // Filtre par date de réservation
-            if (filter.getDateReservationDebut() != null) {
-                queryBuilder.append("AND r.date_reservation_ >= ? ");
-                params.add(Timestamp.valueOf(filter.getDateReservationDebut().atStartOfDay()));
-            }
-
-            if (filter.getDateReservationFin() != null) {
-                queryBuilder.append("AND r.date_reservation_ <= ? ");
-                params.add(Timestamp.valueOf(filter.getDateReservationFin().atTime(23, 59, 59)));
-            }
-
-            // Filtre par date de vol
-            if (filter.getDateVolDebut() != null) {
-                queryBuilder.append("AND v.date_vol_ >= ? ");
-                params.add(Timestamp.valueOf(filter.getDateVolDebut().atStartOfDay()));
-            }
-
-            if (filter.getDateVolFin() != null) {
-                queryBuilder.append("AND v.date_vol_ <= ? ");
-                params.add(Timestamp.valueOf(filter.getDateVolFin().atTime(23, 59, 59)));
-            }
-
-            // Filtre par sièges business minimum
-            if (filter.getPrixMax() != null) {
-                queryBuilder.append("AND r.siege_business >= ? ");
-                params.add(filter.getPrixMax());
-            }
-
-            // Filtre par sièges éco minimum
-            if (filter.getPrixMin() != null) {
-                queryBuilder.append("AND r.siege_eco >= ? ");
-                params.add(filter.getPrixMin());
+            // Filtres
+            if (filter != null) {
+                if (filter.getNumeroVol() != null && !filter.getNumeroVol().trim().isEmpty()) {
+                    queryBuilder.append("AND LOWER(v.numero_vol_) LIKE LOWER(?) ");
+                    params.add("%" + filter.getNumeroVol().trim() + "%");
+                }
+                if (filter.getVilleDestination() != null && !filter.getVilleDestination().trim().isEmpty()) {
+                    queryBuilder.append("AND LOWER(vi.nom) LIKE LOWER(?) ");
+                    params.add("%" + filter.getVilleDestination().trim() + "%");
+                }
+                if (filter.getUsername() != null && !filter.getUsername().trim().isEmpty()) {
+                    queryBuilder.append("AND LOWER(u.username) LIKE LOWER(?) ");
+                    params.add("%" + filter.getUsername().trim() + "%");
+                }
+                if (filter.getPrixMin() != null) {
+                    queryBuilder.append("AND r.prix_total_ >= ? ");
+                    params.add(filter.getPrixMin());
+                }
+                if (filter.getPrixMax() != null) {
+                    queryBuilder.append("AND r.prix_total_ <= ? ");
+                    params.add(filter.getPrixMax());
+                }
+                if (filter.getDateReservationDebut() != null) {
+                    queryBuilder.append("AND r.date_reservation_ >= ? ");
+                    params.add(Timestamp.valueOf(filter.getDateReservationDebut().atStartOfDay()));
+                }
+                if (filter.getDateReservationFin() != null) {
+                    queryBuilder.append("AND r.date_reservation_ <= ? ");
+                    params.add(Timestamp.valueOf(filter.getDateReservationFin().atTime(23, 59, 59)));
+                }
+                if (filter.getDateVolDebut() != null) {
+                    queryBuilder.append("AND v.date_vol_ >= ? ");
+                    params.add(Timestamp.valueOf(filter.getDateVolDebut().atStartOfDay()));
+                }
+                if (filter.getDateVolFin() != null) {
+                    queryBuilder.append("AND v.date_vol_ <= ? ");
+                    params.add(Timestamp.valueOf(filter.getDateVolFin().atTime(23, 59, 59)));
+                }
+                if (filter.getHasBusinessSeats() != null && filter.getHasBusinessSeats()) {
+                    queryBuilder.append("AND r.siege_business > 0 ");
+                }
+                if (filter.getHasEcoSeats() != null && filter.getHasEcoSeats()) {
+                    queryBuilder.append("AND r.siege_eco > 0 ");
+                }
+                if (filter.getMinSieges() != null) {
+                    queryBuilder.append("AND (r.siege_business + r.siege_eco) >= ? ");
+                    params.add(filter.getMinSieges());
+                }
+                if (filter.getMaxSieges() != null) {
+                    queryBuilder.append("AND (r.siege_business + r.siege_eco) <= ? ");
+                    params.add(filter.getMaxSieges());
+                }
             }
 
             queryBuilder.append("ORDER BY r.date_reservation_ DESC");
@@ -107,8 +98,24 @@ public class ReservationService {
             queryResult = DatabaseUtil.executeQuery(queryBuilder.toString(), params.toArray());
 
             while (queryResult.resultSet.next()) {
-                Reservation reservation = mapResultSetToReservation(queryResult.resultSet);
-                reservations.add(reservation);
+                Reservation r = new Reservation();
+                r.setIdReservation(queryResult.resultSet.getLong("id_reservation"));
+                r.setDateReservation(queryResult.resultSet.getTimestamp("date_reservation_").toLocalDateTime());
+                r.setPrixTotal(queryResult.resultSet.getBigDecimal("prix_total_"));
+                r.setIdVol(queryResult.resultSet.getLong("id_vol"));
+                r.setIdUser(queryResult.resultSet.getLong("id_user"));
+                r.setSiegeBusiness(queryResult.resultSet.getInt("siege_business"));
+                r.setSiegeEco(queryResult.resultSet.getInt("siege_eco"));
+
+                r.setNumeroVol(queryResult.resultSet.getString("numero_vol_"));
+                Timestamp tsVol = queryResult.resultSet.getTimestamp("date_vol_");
+                if (tsVol != null)
+                    r.setDateVol(tsVol.toLocalDateTime());
+                r.setVilleDestination(queryResult.resultSet.getString("ville_destination"));
+                r.setUsernameUser(queryResult.resultSet.getString("username_user"));
+                r.setPseudoAvion(queryResult.resultSet.getString("avion_pseudo"));
+
+                reservations.add(r);
             }
 
             System.out.println("✅ " + reservations.size() + " réservation(s) trouvée(s) avec les filtres");
@@ -284,6 +291,8 @@ public class ReservationService {
      */
     private Reservation mapResultSetToReservation(ResultSet rs) throws SQLException {
         Reservation reservation = new Reservation();
+
+        // Mapping des colonnes de base
         reservation.setIdReservation(rs.getLong("id_reservation"));
 
         Timestamp dateReservation = rs.getTimestamp("date_reservation_");
@@ -294,13 +303,15 @@ public class ReservationService {
         reservation.setPrixTotal(rs.getBigDecimal("prix_total_"));
         reservation.setIdVol(rs.getLong("id_vol"));
 
-        Long idUser = rs.getObject("id_user", Long.class);
-        reservation.setIdUser(idUser);
+        // Gestion de l'ID utilisateur (peut être null)
+        Integer id = rs.getInt("id_reservation");
+        reservation.setIdReservation(id != null ? id.longValue() : null);
 
+        // Gestion des sièges (pas de null pour les entiers)
         reservation.setSiegeBusiness(rs.getInt("siege_business"));
         reservation.setSiegeEco(rs.getInt("siege_eco"));
 
-        // Propriétés étendues
+        // Propriétés étendues (peuvent être null avec les LEFT JOIN)
         reservation.setNumeroVol(rs.getString("numero_vol_"));
 
         Timestamp dateVol = rs.getTimestamp("date_vol_");
@@ -347,6 +358,8 @@ public class ReservationService {
                 stats.put("totalSiegesBusiness", queryResult.resultSet.getInt("total_business"));
                 stats.put("totalSiegesEco", queryResult.resultSet.getInt("total_eco"));
             }
+
+            System.out.println("✅ Statistiques calculées: " + stats);
 
         } catch (SQLException e) {
             System.err.println("❌ Erreur lors du calcul des statistiques:");
