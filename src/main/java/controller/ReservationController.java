@@ -9,11 +9,23 @@ import java.util.List;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 @AnnotedController
 public class ReservationController {
     private ReservationService reservationService = new ReservationService();
     private VolService volService = new VolService();
     private UserService userService = new UserService();
+
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final String PDF_SERVICE_URL = "http://localhost:8081/pdf-service/api/pdf/reservation";
 
     /**
      * Afficher la liste des réservations avec filtres (dashboard principal)
@@ -431,4 +443,129 @@ public class ReservationController {
             return mv;
         }
     }
+
+    /**
+     * Télécharger le PDF d'une réservation (NOUVELLE MÉTHODE)
+     */
+    @AnnotedMth("downloadReservationPdf")
+    public ModelView downloadReservationPdf(@Param(name = "id") String idStr, CurrentSession session) {
+        User user = (User) session.get("user");
+        if (user == null) {
+            ModelView mv = new ModelView("views/login.jsp");
+            mv.addObject("error", "Vous devez vous connecter d'abord");
+            return mv;
+        }
+
+        try {
+            Long id = Long.parseLong(idStr);
+            Reservation reservation = reservationService.findReservationById(id);
+
+            if (reservation == null) {
+                ModelView mv = new ModelView("reservations");
+                session.add("errorMessage", "Réservation non trouvée");
+                return mv;
+            }
+
+            System.out.println("📋 Génération du PDF pour la réservation ID: " + id);
+
+            // Appeler le service PDF Spring Boot
+            byte[] pdfContent = callPdfService(reservation);
+
+            if (pdfContent != null) {
+                // Créer une réponse pour télécharger le PDF
+                // Note: Dans votre framework, vous devrez adapter cette partie
+                // pour renvoyer directement le PDF au navigateur
+
+                String fileName = String.format("Reservation_%06d.pdf", reservation.getIdReservation());
+
+                // Ici, nous utilisons une approche de redirection vers une JSP spéciale
+                // qui se chargera de servir le PDF
+                ModelView mv = new ModelView("views/reservations/download-pdf.jsp");
+                mv.addObject("pdfContent", pdfContent);
+                mv.addObject("fileName", fileName);
+                mv.addObject("contentLength", pdfContent.length);
+
+                System.out.println("✅ PDF généré avec succès: " + fileName + " (" + pdfContent.length + " bytes)");
+                return mv;
+
+            } else {
+                ModelView mv = new ModelView("reservations");
+                session.add("errorMessage", "Erreur lors de la génération du PDF");
+                return mv;
+            }
+
+        } catch (NumberFormatException e) {
+            ModelView mv = new ModelView("reservations");
+            session.add("errorMessage", "ID de réservation invalide");
+            return mv;
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors de la génération du PDF:");
+            e.printStackTrace();
+
+            ModelView mv = new ModelView("reservations");
+            session.add("errorMessage", "Erreur lors de la génération du PDF");
+            return mv;
+        }
+    }
+
+    /**
+     * Appelle le service PDF Spring Boot via HTTP
+     */
+    private byte[] callPdfService(Reservation reservation) {
+        try {
+            // Convertir la réservation en JSON pour l'envoyer au service PDF
+            ReservationDTO dto = convertToDTO(reservation);
+            String jsonPayload = objectMapper.writeValueAsString(dto);
+
+            System.out.println("🌐 Appel du service PDF: " + PDF_SERVICE_URL);
+            System.out.println("📦 Payload: " + jsonPayload);
+
+            // Créer la requête HTTP POST
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(PDF_SERVICE_URL))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            // Envoyer la requête
+            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+            if (response.statusCode() == 200) {
+                System.out.println("✅ Service PDF répondu avec succès (Code: " + response.statusCode() + ")");
+                return response.body();
+            } else {
+                System.err.println("❌ Service PDF a répondu avec une erreur (Code: " + response.statusCode() + ")");
+                return null;
+            }
+
+        } catch (IOException | InterruptedException e) {
+            System.err.println("❌ Erreur lors de l'appel au service PDF:");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Convertit une Reservation en ReservationDTO pour l'envoi au service PDF
+     */
+    private ReservationDTO convertToDTO(Reservation reservation) {
+        ReservationDTO dto = new ReservationDTO();
+        dto.setIdReservation(reservation.getIdReservation());
+        dto.setDateReservation(reservation.getDateReservation());
+        dto.setPrixTotal(reservation.getPrixTotal());
+        dto.setIdVol(reservation.getIdVol());
+        dto.setIdUser(reservation.getIdUser());
+        dto.setSiegeBusiness(reservation.getSiegeBusiness());
+        dto.setSiegeEco(reservation.getSiegeEco());
+
+        // Propriétés étendues
+        dto.setNumeroVol(reservation.getNumeroVol());
+        dto.setDateVol(reservation.getDateVol());
+        dto.setVilleDestination(reservation.getVilleDestination());
+        dto.setUsernameUser(reservation.getUsernameUser());
+        dto.setPseudoAvion(reservation.getPseudoAvion());
+
+        return dto;
+    }
+
 }

@@ -25,6 +25,10 @@
                    <a href="reservations">Retour à la liste des réservations</a>
                 </p>
             </div>
+            <button type="button" class="btn-pdf" onclick="downloadPDF(<%= reservation.getIdReservation() %>)"
+                    title="Télécharger PDF">
+                <i class="fas fa-file-pdf fa-lg pdf-icon"></i> Télécharger PDF
+            </button>
         </div>
 
         <% if (errorMessage != null) { %>
@@ -130,5 +134,56 @@
             <% } %>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        /**
+         * Fonction pour télécharger le PDF d'une réservation
+         */
+        function downloadPDF(reservationId) {
+            // Afficher un indicateur de chargement
+            const icon = event.target;
+            const originalClass = icon.className;
+            icon.className = 'fas fa-spinner fa-spin fa-lg';
+            
+            // Créer une nouvelle fenêtre pour télécharger le PDF
+            const url = 'downloadReservationPdf?id=' + reservationId;
+            
+            // Utiliser une iframe cachée pour déclencher le téléchargement
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = url;
+            
+            // Gestion des erreurs et du succès
+            iframe.onload = function() {
+                // Restaurer l'icône après un délai
+                setTimeout(() => {
+                    icon.className = originalClass;
+                }, 1000);
+                
+                // Supprimer l'iframe après utilisation
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 2000);
+            };
+            
+            iframe.onerror = function() {
+                alert('Erreur lors du téléchargement du PDF');
+                icon.className = originalClass;
+                document.body.removeChild(iframe);
+            };
+            
+            document.body.appendChild(iframe);
+        }
+        
+        // Auto-masquer les alertes après 5 secondes
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert-dismissible');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
 </body>
 </html>
