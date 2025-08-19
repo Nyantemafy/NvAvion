@@ -92,20 +92,21 @@ CREATE TABLE prix_siege_vol_(
    FOREIGN KEY(Id_vol) REFERENCES vol(Id_vol)
 );
 
-CREATE TABLE reservation(
-   Id_reservation SERIAL,
-   date_reservation_ TIMESTAMP,
-   prix_total_ NUMERIC(15,2),
-   Id_vol INTEGER NOT NULL,
-   Id_user INTEGER,
-   siege_business INTEGER,
-   siege_eco INTEGER,
-   PRIMARY KEY(Id_reservation),
-   FOREIGN KEY(Id_vol) REFERENCES vol(Id_vol),
-   FOREIGN KEY(Id_user) REFERENCES users(id)
+CREATE TABLE annulation_reservation_(
+   Id_annulation_reservation_ SERIAL,
+   raison_annulation_ VARCHAR(50) ,
+   date_annulation_ DATE,
+   Id_reservation INTEGER,
+   PRIMARY KEY(Id_annulation_reservation_),
+   FOREIGN KEY(Id_reservation) REFERENCES reservation(Id_reservation)
 );
 
--- Index pour améliorer les performances
-CREATE INDEX idx_reservation_vol ON reservation(Id_vol);
-CREATE INDEX idx_reservation_user ON reservation(Id_user);
-CREATE INDEX idx_reservation_date ON reservation(date_reservation_);
+CREATE TABLE passager (
+   id_passager SERIAL PRIMARY KEY,
+   nom VARCHAR(100) NOT NULL,
+   prenom VARCHAR(100) NOT NULL,
+   age INTEGER NOT NULL,
+   photo VARCHAR(255), 
+   id_reservation INTEGER NOT NULL,
+   FOREIGN KEY (id_reservation) REFERENCES reservation(Id_reservation)
+);
