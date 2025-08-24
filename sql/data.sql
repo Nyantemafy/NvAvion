@@ -106,3 +106,9 @@ VALUES
   ('2025-08-22 11:10:00', 700.00, 2, 1, 0, 2),
   ('2025-08-22 13:25:00', 2600.00, 5, 3, 2, 0);
 
+INSERT INTO categorie_age (nom, age_min, age_max, multiplicateur_prix, description) VALUES
+('Bebe', 0, 2, 0.1000, 'Gratuit ou tarif symbolique pour les bebes'),
+('Enfant', 3, 11, 0.7500, 'Tarif reduit 25% pour les enfants'),
+('Adolescent', 12, 17, 0.9000, 'Tarif reduit 10% pour les adolescents'),
+('Adulte', 18, 64, 1.0000, 'Tarif normal pour les adultes'),
+('Senior', 65, NULL, 0.8500, 'Tarif reduit 15% pour les seniors');

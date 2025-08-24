@@ -101,12 +101,111 @@ CREATE TABLE annulation_reservation_(
    FOREIGN KEY(Id_reservation) REFERENCES reservation(Id_reservation)
 );
 
-CREATE TABLE passager (
-   id_passager SERIAL PRIMARY KEY,
-   nom VARCHAR(100) NOT NULL,
-   prenom VARCHAR(100) NOT NULL,
-   age INTEGER NOT NULL,
-   photo VARCHAR(255), 
-   id_reservation INTEGER NOT NULL,
-   FOREIGN KEY (id_reservation) REFERENCES reservation(Id_reservation)
+ALTER TABLE users ADD COLUMN date_naissance DATE;
+ALTER TABLE users ADD COLUMN id_categorie_age INT;
+
+CREATE TABLE categorie_age (
+    id_categorie_age SERIAL PRIMARY KEY,
+    nom VARCHAR(50) NOT NULL,
+    age_min INTEGER NOT NULL,
+    age_max INTEGER,
+    multiplicateur_prix NUMERIC(5,4) NOT NULL DEFAULT 1.0000,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE prix_age_vol (
+    id_prix_age_vol SERIAL PRIMARY KEY,
+    id_vol INTEGER NOT NULL,
+    id_type_siege INTEGER NOT NULL,
+    id_categorie_age INTEGER NOT NULL,
+    prix_base NUMERIC(15,2) NOT NULL,
+    multiplicateur NUMERIC(6,2) NOT NULL, -- tu stockes ici le multiplicateur
+    prix_final NUMERIC(15,2) GENERATED ALWAYS AS (prix_base * multiplicateur) STORED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(id_vol) REFERENCES vol(id_vol) ON DELETE CASCADE,
+    FOREIGN KEY(id_type_siege) REFERENCES type_siege(id_type_siege),
+    FOREIGN KEY(id_categorie_age) REFERENCES categorie_age(id_categorie_age),
+    UNIQUE(id_vol, id_type_siege, id_categorie_age)
+);
+
+
+CREATE VIEW v_user_age_category AS
+SELECT 
+    u.id,
+    u.username,
+    u.date_naissance,
+    EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_naissance)) AS age,
+    ca.id_categorie_age,
+    ca.nom AS categorie_nom,
+    ca.multiplicateur_prix
+FROM users u
+LEFT JOIN categorie_age ca ON (
+    EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_naissance)) >= ca.age_min 
+    AND (ca.age_max IS NULL OR EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_naissance)) <= ca.age_max)
+    AND ca.is_active = TRUE
+)
+WHERE u.date_naissance IS NOT NULL;
+
+CREATE VIEW v_prix_final_user AS
+SELECT 
+    v.id_vol,
+    v.numero_vol_,
+    ts.id_type_siege,
+    ts.rubrique AS type_siege,
+    u.id AS user_id,
+    u.username,
+    uac.age,
+    uac.categorie_nom,
+    pav.prix_base,
+    pav.prix_final,
+    uac.multiplicateur_prix
+FROM vol v
+CROSS JOIN type_siege ts
+CROSS JOIN v_user_age_category uac
+JOIN users u ON u.id_categorie_age = uac.id_categorie_age 
+LEFT JOIN prix_age_vol pav ON (
+    pav.id_vol = v.id_vol 
+    AND pav.id_type_siege = ts.id_type_siege 
+    AND pav.id_categorie_age = uac.id_categorie_age
+);
+
+CREATE OR REPLACE FUNCTION calculer_prix_age(
+    p_id_vol INTEGER,
+    p_id_type_siege INTEGER,
+    p_date_naissance DATE
+) RETURNS NUMERIC(15,2) AS $$
+DECLARE
+    v_age INTEGER;
+    v_prix_final NUMERIC(15,2);
+BEGIN
+    v_age := EXTRACT(YEAR FROM AGE(CURRENT_DATE, p_date_naissance));
+    
+    SELECT pav.prix_final INTO v_prix_final
+    FROM prix_age_vol pav
+    JOIN categorie_age ca ON ca.id_categorie_age = pav.id_categorie_age
+    WHERE pav.id_vol = p_id_vol
+    AND pav.id_type_siege = p_id_type_siege
+    AND v_age >= ca.age_min
+    AND (ca.age_max IS NULL OR v_age <= ca.age_max)
+    AND ca.is_active = TRUE
+    LIMIT 1;
+    
+    IF v_prix_final IS NULL THEN
+        SELECT psv.prix_ INTO v_prix_final
+        FROM prix_siege_vol_ psv
+        WHERE psv.id_vol = p_id_vol
+        AND psv.id_type_siege = p_id_type_siege
+        LIMIT 1;
+    END IF;
+    
+    RETURN COALESCE(v_prix_final, 0);
+END;
+$$ LANGUAGE plpgsql;
+
+-- 8. Index pour améliorer les performances
+CREATE INDEX idx_prix_age_vol_vol_siege ON prix_age_vol(id_vol, id_type_siege);
+CREATE INDEX idx_prix_age_vol_categorie ON prix_age_vol(id_categorie_age);
+CREATE INDEX idx_users_date_naissance ON users(date_naissance);
