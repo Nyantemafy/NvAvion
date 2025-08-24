@@ -11,6 +11,14 @@ import java.time.LocalDateTime;
 public class VolController {
     private VolService volService = new VolService();
 
+    @AnnotedMth("testVol")
+    public ModelView testVol() {
+        System.out.println("🎯 TEST VOL CONTROLLER - Méthode simple appelée");
+        ModelView mv = new ModelView("views/login.jsp");
+        mv.addObject("message", "VolController fonctionne !");
+        return mv;
+    }
+
     /**
      * Afficher la liste des vols avec filtres (dashboard principal)
      */

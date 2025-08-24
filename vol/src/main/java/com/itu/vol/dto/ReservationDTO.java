@@ -33,12 +33,30 @@ public class ReservationDTO {
     private String villeDestination;
     private String usernameUser;
     private String pseudoAvion;
+    private BigDecimal prixBusiness;
+    private BigDecimal prixEco;
 
     // Constructeurs
     public ReservationDTO() {
     }
 
     // Getters et Setters
+    public BigDecimal getPrixBusiness() {
+        return prixBusiness;
+    }
+
+    public void setPrixBusiness(BigDecimal prixBusiness) {
+        this.prixBusiness = prixBusiness;
+    }
+
+    public BigDecimal getPrixEco() {
+        return prixEco;
+    }
+
+    public void setPrixEco(BigDecimal prixEco) {
+        this.prixEco = prixEco;
+    }
+
     public Long getIdReservation() {
         return idReservation;
     }

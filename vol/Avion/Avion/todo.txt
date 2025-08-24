@@ -1,0 +1,36 @@
+-login :
+    -**affichage : -page login
+    -metier : -check login et role (meFramework)
+
+-CRUD vol :
+    -**affichage : -ajout vol
+                 -liste vol + filtre multi-critere : ville, avion, estReserve, estPromote, estAnnule
+                 -delete vol
+                 -update vol
+    -**metier : -jpa
+
+-disponibilite des avions
+-Detail avion
+-**Promotion : -affichage :**- insert promotion : siege et pourcentage
+                         **- detail promotion : nb siege en promotion restant, idUser
+
+-**Reservation : **-check nb heure avant vol
+               **-check nb place non prise
+               **-detail reservation : siege, idUser
+
+-*Annulation : **-check nb heure avant vol
+              -check place
+              **-detail annulation : idUser, siege
+              
+
+-**liste reservation
+-**lasa ajout ilay update
+
+________________________ CREATE USER _______________________
+postgres=# CREATE USER antema WITH PASSWORD 'itu16';
+CREATE ROLE
+postgres=# ALTER USER antema WITH CREATEDB CREATEROLE;
+ALTER ROLE
+postgres=# ALTER USER antema WITH SUPERUSER;
+ALTER ROLE
+postgres=#
