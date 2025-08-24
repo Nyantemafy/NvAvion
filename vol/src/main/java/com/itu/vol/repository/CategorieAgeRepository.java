@@ -22,4 +22,8 @@ public interface CategorieAgeRepository extends JpaRepository<CategorieAge, Long
 
     @Query("SELECT ca FROM CategorieAge ca WHERE ca.nom = :nom AND ca.isActive = true")
     Optional<CategorieAge> findByNomAndIsActiveTrue(@Param("nom") String nom);
+
+    @Query("SELECT ca FROM CategorieAge ca WHERE ca.isActive = true")
+    List<CategorieAge> findByIsActiveTrue();
+
 }

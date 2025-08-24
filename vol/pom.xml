@@ -92,6 +92,12 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<!-- Thymeleaf pour les templates -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

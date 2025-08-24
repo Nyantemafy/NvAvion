@@ -18,21 +18,23 @@ public class Vol {
     @Column(name = "date_vol_")
     private LocalDateTime dateVol;
 
-    @Column(name = "id_ville", nullable = false)
-    private Long idVille;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_ville", insertable = false, updatable = false)
+    private Ville ville;
 
-    @Column(name = "id_avion")
-    private Long idAvion;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_avion", insertable = false, updatable = false)
+    private Avion avion;
 
     // --- Constructeurs ---
     public Vol() {
     }
 
-    public Vol(String numeroVol, LocalDateTime dateVol, Long idVille, Long idAvion) {
+    public Vol(String numeroVol, LocalDateTime dateVol, Ville ville, Avion avion) {
         this.numeroVol = numeroVol;
         this.dateVol = dateVol;
-        this.idVille = idVille;
-        this.idAvion = idAvion;
+        this.ville = ville;
+        this.avion = avion;
     }
 
     // --- Getters & Setters ---
@@ -56,19 +58,19 @@ public class Vol {
         this.dateVol = dateVol;
     }
 
-    public Long getIdVille() {
-        return idVille;
+    public Ville getVille() {
+        return ville;
     }
 
-    public void setIdVille(Long idVille) {
-        this.idVille = idVille;
+    public void setVille(Ville ville) {
+        this.ville = ville;
     }
 
-    public Long getIdAvion() {
-        return idAvion;
+    public Avion getAvion() {
+        return avion;
     }
 
-    public void setIdAvion(Long idAvion) {
-        this.idAvion = idAvion;
+    public void setAvion(Avion avion) {
+        this.avion = avion;
     }
 }

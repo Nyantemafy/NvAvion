@@ -14,14 +14,17 @@ public class PrixAgeVol {
     @Column(name = "id_prix_age_vol")
     private Long id;
 
-    @Column(name = "id_vol", nullable = false)
-    private Long idVol;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_vol", insertable = false, updatable = false)
+    private Vol vol;
 
-    @Column(name = "id_type_siege", nullable = false)
-    private Long idTypeSiege;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_type_siege", insertable = false, updatable = false)
+    private TypeSiege typeSiege;
 
-    @Column(name = "id_categorie_age", nullable = false)
-    private Long idCategorieAge;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_categorie_age", insertable = false, updatable = false)
+    private CategorieAge categorieAge;
 
     @Column(name = "prix_base", precision = 15, scale = 2, nullable = false)
     private BigDecimal prixBase;
@@ -29,7 +32,7 @@ public class PrixAgeVol {
     @Column(name = "multiplicateur", precision = 6, scale = 2, nullable = false)
     private BigDecimal multiplicateur;
 
-    @Column(name = "prix_final", precision = 15, scale = 2, insertable = false, updatable = false)
+    @Column(name = "prix_final", precision = 15, scale = 2, insertable = false)
     private BigDecimal prixFinal;
 
     @Column(name = "created_at", updatable = false, insertable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
@@ -42,10 +45,10 @@ public class PrixAgeVol {
     public PrixAgeVol() {
     }
 
-    public PrixAgeVol(Long idVol, Long idTypeSiege, Long idCategorieAge, BigDecimal prixBase) {
-        this.idVol = idVol;
-        this.idTypeSiege = idTypeSiege;
-        this.idCategorieAge = idCategorieAge;
+    public PrixAgeVol(Vol vol, TypeSiege typeSiege, CategorieAge categorieAge, BigDecimal prixBase) {
+        this.vol = vol;
+        this.typeSiege = typeSiege;
+        this.categorieAge = categorieAge;
         this.prixBase = prixBase;
     }
 
@@ -54,28 +57,28 @@ public class PrixAgeVol {
         return id;
     }
 
-    public Long getIdVol() {
-        return idVol;
+    public Vol getVol() {
+        return vol;
     }
 
-    public void setIdVol(Long idVol) {
-        this.idVol = idVol;
+    public void setVol(Vol vol) {
+        this.vol = vol;
     }
 
-    public Long getIdTypeSiege() {
-        return idTypeSiege;
+    public TypeSiege getTypeSiege() {
+        return typeSiege;
     }
 
-    public void setIdTypeSiege(Long idTypeSiege) {
-        this.idTypeSiege = idTypeSiege;
+    public void setTypeSiege(TypeSiege typeSiege) {
+        this.typeSiege = typeSiege;
     }
 
-    public Long getIdCategorieAge() {
-        return idCategorieAge;
+    public CategorieAge getCategorieAge() {
+        return categorieAge;
     }
 
-    public void setIdCategorieAge(Long idCategorieAge) {
-        this.idCategorieAge = idCategorieAge;
+    public void setCategorieAge(CategorieAge categorieAge) {
+        this.categorieAge = categorieAge;
     }
 
     public BigDecimal getPrixBase() {
@@ -96,6 +99,10 @@ public class PrixAgeVol {
 
     public BigDecimal getPrixFinal() {
         return prixFinal;
+    }
+
+    public void setPrixFinal(BigDecimal prixFinal) {
+        this.prixFinal = prixFinal;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -1,0 +1,112 @@
+<!-- vol/src/main/resources/templates/prix-age/index.html -->
+<!DOCTYPE html>
+<html layout:decorate="~{layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dashboard - Configuration Prix par Âge</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="row mb-4">
+            <div class="col">
+                <h2><i class="fas fa-tachometer-alt"></i> Dashboard Configuration Prix par Âge</h2>
+                <p class="text-muted">Gérez les prix des vols selon l'âge des passagers</p>
+            </div>
+        </div>
+
+        <!-- Messages d'alerte -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="small">Catégories d'Âge</div>
+                                <div class="h3" th:text="${totalCategories} ?: 0">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-plane fa-2x"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="small">Vols Disponibles</div>
+                                <div class="h3" th:text="${totalVols} ?: 0">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-euro-sign fa-2x"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="small">Prix Configurés</div>
+                                <div class="h3">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="small">Simulations</div>
+                                <div class="h3">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="row mb-4">
+            <div class="col">
+                <h4><i class="fas fa-bolt"></i> Actions Rapides</h4>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Gérer les Catégories</h5>
+                        <p class="card-text">Créer et modifier les catégories d'âge avec leurs multiplicateurs</p>
+                        <a th:href="@{/prix-age/categories}" class="btn btn-primary">
+                            <i class="fas fa-cog"></i> Gérer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

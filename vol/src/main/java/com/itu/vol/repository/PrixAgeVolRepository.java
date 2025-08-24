@@ -1,7 +1,6 @@
 package com.itu.vol.repository;
 
-import com.itu.vol.dto.*;
-import com.itu.vol.model.PrixAgeVol;
+import com.itu.vol.model.*;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,29 +14,30 @@ import java.util.Optional;
 @Repository
 public interface PrixAgeVolRepository extends JpaRepository<PrixAgeVol, Long> {
 
-    Optional<PrixAgeVol> findByIdVolAndIdTypeSiegeAndIdCategorieAge(
-            Long idVol, Long idTypeSiege, Long idCategorieAge);
+        List<PrixAgeVol> findByVol(Vol vol);
 
-    List<PrixAgeVol> findByIdVolOrderByIdTypeSiegeAscIdCategorieAgeAsc(Long idVol);
+        boolean existsByVolAndTypeSiegeAndCategorieAge(Vol vol, TypeSiege siege, CategorieAge cat);
 
-    List<PrixAgeVol> findByIdVolAndIdTypeSiege(Long idVol, Long idTypeSiege);
+        Optional<PrixAgeVol> findByVolAndTypeSiegeAndCategorieAge(Vol vol, TypeSiege siege, CategorieAge cat);
 
-    @Query("SELECT pav FROM PrixAgeVol pav JOIN pav.categorieAge ca " +
-            "WHERE pav.idVol = :idVol AND pav.idTypeSiege = :idTypeSiege " +
-            "AND ca.ageMin <= :age AND (ca.ageMax IS NULL OR ca.ageMax >= :age) " +
-            "AND ca.isActive = true")
-    Optional<PrixAgeVol> findPrixForVolSiegeAndAge(
-            @Param("idVol") Long idVol,
-            @Param("idTypeSiege") Long idTypeSiege,
-            @Param("age") int age);
+        List<PrixAgeVol> findByVolOrderByTypeSiegeAscCategorieAgeAsc(Vol vol);
 
-    @Query(value = """
-            SELECT calculer_prix_age(:idVol, :idTypeSiege, :dateNaissance)
-            """, nativeQuery = true)
-    BigDecimal calculerPrixAge(
-            @Param("idVol") Long idVol,
-            @Param("idTypeSiege") Long idTypeSiege,
-            @Param("dateNaissance") java.sql.Date dateNaissance);
+        List<PrixAgeVol> findByVolAndTypeSiege(Vol vol, TypeSiege siege);
 
-    void deleteByIdVol(Long idVol);
+        @Query("SELECT pav FROM PrixAgeVol pav JOIN pav.categorieAge ca " +
+                        "WHERE pav.vol = :vol AND pav.typeSiege = :siege " +
+                        "AND ca.ageMin <= :age AND (ca.ageMax IS NULL OR ca.ageMax >= :age) " +
+                        "AND ca.isActive = true")
+        Optional<PrixAgeVol> findPrixForVolSiegeAndAge(
+                        @Param("vol") Vol vol,
+                        @Param("siege") TypeSiege siege,
+                        @Param("age") int age);
+
+        @Query(value = "SELECT calculer_prix_age(:idVol, :idTypeSiege, :dateNaissance)", nativeQuery = true)
+        BigDecimal calculerPrixAge(
+                        @Param("idVol") Long idVol,
+                        @Param("idTypeSiege") Long idTypeSiege,
+                        @Param("dateNaissance") java.sql.Date dateNaissance);
+
+        void deleteByVol(Vol vol);
 }
