@@ -1,88 +1,251 @@
-<!-- vol/src/main/resources/templates/prix-age/index.html -->
 <!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:with="baseUrl=@{/}">
 <html layout:decorate="~{layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Dashboard - Configuration Prix par Âge</title>
+    <title>Dashboard - Configuration des Tarifs Aériens par Âge</title>
+    <style>
+        /* ===== VARIABLES ET COULEURS ===== */
+        :root {
+            --aviation-primary: #003366;
+            --aviation-secondary: #007acc;
+            --aviation-success: #28a745;
+            --aviation-info: #17a2b8;
+            --aviation-warning: #ffc107;
+            --aviation-light: #f8f9fa;
+            --aviation-dark: #212529;
+        }
+
+        /* ===== CLASSES DE COULEURS ===== */
+        .text-aviation-primary { color: var(--aviation-primary); }
+        .text-aviation-success { color: var(--aviation-success); }
+        .text-aviation-info { color: var(--aviation-info); }
+        .text-aviation-warning { color: var(--aviation-warning); }
+
+        .bg-aviation-primary { background-color: var(--aviation-primary) !important; }
+        .bg-aviation-success { background-color: var(--aviation-success) !important; }
+        .bg-aviation-info { background-color: var(--aviation-info) !important; }
+        .bg-aviation-warning { background-color: var(--aviation-warning) !important; color: #000 !important; }
+        .bg-aviation-light { background-color: var(--aviation-light); }
+
+        .border-aviation-primary { border-color: var(--aviation-primary); }
+        .border-aviation-success { border-color: var(--aviation-success); }
+        .border-aviation-info { border-color: var(--aviation-info); }
+        .border-aviation-warning { border-color: var(--aviation-warning); }
+
+        /* ===== COMPOSANTS CARDS ===== */
+        .aviation-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .aviation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 51, 102, 0.15);
+        }
+
+        .card-header-aviation {
+            background: linear-gradient(135deg, var(--aviation-primary) 0%, var(--aviation-secondary) 100%);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 15px 20px;
+            border: none;
+        }
+
+        /* ===== BOUTONS ===== */
+        .btn-aviation {
+            background: linear-gradient(135deg, var(--aviation-primary) 0%, var(--aviation-secondary) 100%);
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-aviation:hover {
+            background: linear-gradient(135deg, #002244 0%, #0066b3 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+            color: white;
+        }
+
+        /* ===== STATISTIQUES ===== */
+        .stats-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            border: 2px solid;
+            border-radius: 12px;
+            width: 200px;
+            transition: all 0.3s ease;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-content {
+            text-align: center;
+            padding: 15px 10px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            background-color: var(--aviation-light);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .stat-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+
+        /* ===== ALERTES ===== */
+        .aviation-alert {
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ===== TABLEAUX ===== */
+        .table th {
+            background: linear-gradient(135deg, var(--aviation-primary) 0%, var(--aviation-secondary) 100%);
+            color: white;
+            border: none;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 51, 102, 0.05);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .stats-container {
+                gap: 10px;
+            }
+            
+            .stat-card {
+                width: 160px;
+            }
+            
+            .stat-number {
+                font-size: 1.3rem;
+            }
+            
+            .btn-aviation {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .stat-card {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div layout:fragment="content">
-        <div class="row mb-4">
-            <div class="col">
-                <h2><i class="fas fa-tachometer-alt"></i> Dashboard Configuration Prix par Âge</h2>
-                <p class="text-muted">Gérez les prix des vols selon l'âge des passagers</p>
-            </div>
+        <!-- Le reste du contenu reste inchangé -->
+        <div class="col">
+            <h2 class="text-aviation-primary"><i class="fas fa-plane-departure me-3"></i>Tableau de Bord - Tarification Aérienne par Âge</h2>
+            <p class="text-muted">Configurez et gérez les tarifs des vols en fonction de l'âge des passagers</p>
         </div>
 
         <!-- Messages d'alerte -->
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle"></i> <span th:text="${success}"></span>
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show aviation-alert" role="alert">
+            <i class="fas fa-check-circle me-2"></i> <span th:text="${success}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show aviation-alert" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i> <span th:text="${error}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
         <!-- Statistiques -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-users fa-2x"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <div class="small">Catégories d'Âge</div>
-                                <div class="h3" th:text="${totalCategories} ?: 0">0</div>
-                            </div>
-                        </div>
+        <div class="stats-container">
+            <!-- Carte Catégories d'Âge -->
+            <div class="card stat-card border-aviation-primary">
+                <div class="stat-content">
+                    <div class="stat-icon mx-auto">
+                        <i class="fas fa-user-friends text-aviation-primary"></i>
                     </div>
+                    <div class="stat-number text-aviation-primary" th:text="${totalCategories} ?: 0">0</div>
+                    <div class="stat-label">Catégories d'Âge</div>
+                    <span class="stat-badge bg-aviation-primary text-white">Actives</span>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-plane fa-2x"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <div class="small">Vols Disponibles</div>
-                                <div class="h3" th:text="${totalVols} ?: 0">0</div>
-                            </div>
-                        </div>
+
+            <!-- Carte Vols Actifs -->
+            <div class="card stat-card border-aviation-success">
+                <div class="stat-content">
+                    <div class="stat-icon mx-auto">
+                        <i class="fas fa-plane text-aviation-success"></i>
                     </div>
+                    <div class="stat-number text-aviation-success" th:text="${totalVols} ?: 0">0</div>
+                    <div class="stat-label">Vols Actifs</div>
+                    <span class="stat-badge bg-aviation-success text-white">Disponibles</span>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card bg-info text-white">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-euro-sign fa-2x"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <div class="small">Prix Configurés</div>
-                                <div class="h3">-</div>
-                            </div>
-                        </div>
+
+            <!-- Carte Simulations -->
+            <div class="card stat-card border-aviation-info">
+                <div class="stat-content">
+                    <div class="stat-icon mx-auto">
+                        <i class="fas fa-chart-line text-aviation-info"></i>
                     </div>
+                    <div class="stat-number text-aviation-info" th:text="${totalSimulations} ?: 0">0</div>
+                    <div class="stat-label">Simulations</div>
+                    <span class="stat-badge bg-aviation-info text-white">Récentes</span>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-chart-line fa-2x"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <div class="small">Simulations</div>
-                                <div class="h3">-</div>
-                            </div>
-                        </div>
+
+            <!-- Carte Tarifs Configurés -->
+            <div class="card stat-card border-aviation-warning">
+                <div class="stat-content">
+                    <div class="stat-icon mx-auto">
+                        <i class="fas fa-euro-sign text-aviation-warning"></i>
                     </div>
+                    <div class="stat-number text-aviation-warning" th:text="${totalConfigurations} ?: 0">0</div>
+                    <div class="stat-label">Tarifs Configurés</div>
+                    <span class="stat-badge bg-aviation-warning">Complets</span>
                 </div>
             </div>
         </div>
@@ -90,23 +253,85 @@
         <!-- Actions rapides -->
         <div class="row mb-4">
             <div class="col">
-                <h4><i class="fas fa-bolt"></i> Actions Rapides</h4>
+                <h4 class="text-aviation-primary"><i class="fas fa-rocket me-2"></i>Actions Rapides</h4>
             </div>
         </div>
 
         <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card h-100">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 aviation-card">
+                    <div class="card-header card-header-aviation">
+                        <i class="fas fa-user-friends fa-2x mb-2"></i>
+                        <h5 class="card-title mb-0">Catégories d'Âge</h5>
+                    </div>
                     <div class="card-body text-center">
-                        <i class="fas fa-users fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Gérer les Catégories</h5>
-                        <p class="card-text">Créer et modifier les catégories d'âge avec leurs multiplicateurs</p>
-                        <a th:href="@{/prix-age/categories}" class="btn btn-primary">
-                            <i class="fas fa-cog"></i> Gérer
+                        <p class="card-text">Définissez les tranches d'âge et les coefficients tarifaires</p>
+                        <a th:href="@{/prix-age/categories}" class="btn btn-aviation">
+                            <i class="fas fa-cog me-2"></i> Gérer les Catégories
                         </a>
                     </div>
                 </div>
             </div>
         </div>
-    </body>
+
+        <!-- Liste des vols -->
+        <div class="row mb-4">
+            <div class="col">
+                <h4 class="text-aviation-primary"><i class="fas fa-plane me-2"></i>Vols Disponibles</h4>
+                <p class="text-muted">Sélectionnez un vol pour configurer ses prix par catégorie d'âge</p>
+            </div>
+        </div>
+
+        <div class="card aviation-card">
+            <div class="card-header card-header-aviation">
+                <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Liste des Vols</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(vols)}" class="text-center py-5">
+                    <i class="fas fa-plane fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Aucun vol disponible</h4>
+                    <p class="text-muted">Ajoutez des vols dans la base de données pour commencer</p>
+                </div>
+                
+                <div th:if="${not #lists.isEmpty(vols)}">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Numéro Vol</th>
+                                    <th>Date</th>
+                                    <th>Destination</th>
+                                    <th>Avion</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="vol : ${vols}">
+                                    <td>
+                                        <strong th:text="${vol.numeroVol}">AF1234</strong>
+                                    </td>
+                                    <td th:text="${#temporals.format(vol.dateVol, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:30</td>
+                                    <td>
+                                        <span th:text="${vol.ville?.nom}">Paris</span>
+                                    </td>
+                                    <td>
+                                        <span th:text="${vol.avion?.pseudo}">Boeing 737</span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{~/prix-age/vol/{id}(id=${vol.id})}" class="btn btn-aviation btn-sm">
+                                            <i class="fas fa-euro-sign me-1"></i> Configurer Prix
+                                        </a>
+                                        <a th:href="@{~/prix-age/vol/{id}/simulation(id=${vol.id})}" class="btn btn-outline-primary btn-sm ms-1">
+                                            <i class="fas fa-chart-line me-1"></i> Simulation
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
 </html>
