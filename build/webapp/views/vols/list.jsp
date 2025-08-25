@@ -165,7 +165,6 @@
                         <th>Date & Heure</th>
                         <th>Destination</th>
                         <th>Avion</th>
-                        <th>Prix</th>
                         <th>Promotion</th>
                         <th>Actions</th>
                     </tr>
@@ -182,16 +181,6 @@
                             </td>
                             <td>
                                 ✈️ <%= vol.getPseudoAvion() != null ? vol.getPseudoAvion() : "N/A" %>
-                            </td>
-                            <td>
-                                <% if (vol.getPrixMin() != null && vol.getPrixMax() != null) { %>
-                                    <span class="price-range">
-                                        <%= String.format("%.2f€", vol.getPrixMin()) %> - 
-                                        <%= String.format("%.2f€", vol.getPrixMax()) %>
-                                    </span>
-                                <% } else { %>
-                                    <em>Prix non défini</em>
-                                <% } %>
                             </td>
                             <td>
                                 <% if (vol.getPromotionNom() != null) { %>

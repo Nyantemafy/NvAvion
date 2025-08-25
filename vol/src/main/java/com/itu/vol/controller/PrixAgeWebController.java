@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/prix-age")
@@ -129,9 +130,8 @@ public class PrixAgeWebController {
      */
     @GetMapping("/vol/{idVol}")
     public String volPrix(@PathVariable Long idVol, Model model) {
-        System.out.println("Entrer dans configuration");
         try {
-            Vol vol = volService.getVolById(idVol);
+            Vol vol = volService.getVolById(idVol.intValue());
             if (vol == null) {
                 model.addAttribute("error", "Vol non trouvé");
                 return "redirect:/prix-age";
@@ -141,12 +141,24 @@ public class PrixAgeWebController {
             List<CategorieAge> categories = configPrixAgeService.getAllCategoriesAge();
             List<TypeSiege> typeSieges = configPrixAgeService.getAllTypeSieges();
 
+            Map<Long, Double> prixSieges = configPrixAgeService.getPrixSiegesByVol(idVol);
+            System.out.println("Prix sièges récupérés: " + prixSieges);
+
+            ConfigPrixForm configForm = new ConfigPrixForm();
+            if (!prixSieges.isEmpty()) {
+                System.out.println("========= existant ===========");
+                Long firstTypeSiegeId = prixSieges.keySet().iterator().next();
+                Double prixDouble = prixSieges.get(firstTypeSiegeId);
+                configForm.setPrixBase(prixDouble != null ? BigDecimal.valueOf(prixDouble) : null);
+            }
+
             model.addAttribute("vol", vol);
             model.addAttribute("prixVol", prixVol);
             model.addAttribute("categories", categories);
             model.addAttribute("typeSieges", typeSieges);
-            model.addAttribute("configForm", new ConfigPrixForm());
+            model.addAttribute("configForm", configForm);
             model.addAttribute("initForm", new InitPrixVolForm());
+            model.addAttribute("prixSieges", prixSieges);
 
             return "prix-age/vol-prix";
 
@@ -184,57 +196,56 @@ public class PrixAgeWebController {
     }
 
     /**
-     * Configurer un prix spécifique
+     * Configurer un prix spécifique - Version corrigée
      */
     @PostMapping("/vol/{idVol}/configurer")
     public String configurerPrix(@PathVariable Long idVol,
             @Valid @ModelAttribute("configForm") ConfigPrixForm form,
             BindingResult result, RedirectAttributes redirectAttributes) {
 
-        System.out.println("=== Configuration ===");
+        System.out.println("=== Configuration DEBUT ===");
+        System.out.println("ID Vol: " + idVol);
+        System.out.println("Form data: " + form.toString());
 
         if (result.hasErrors()) {
-            System.out.println(result.getAllErrors());
+            System.out.println("Erreurs de validation:");
+            result.getAllErrors().forEach(error -> {
+                System.out.println("- " + error.getDefaultMessage());
+            });
             redirectAttributes.addFlashAttribute("error", "Configuration invalide");
             return "redirect:/prix-age/vol/" + idVol;
         }
 
         try {
-            Vol vol = volRepository.findById(idVol).orElseThrow();
-            TypeSiege siege = typeSiegeRepository.findById(form.getIdTypeSiege()).orElseThrow();
-            CategorieAge cat = categorieAgeRepository.findById(form.getIdCategorieAge().longValue()).orElseThrow();
+            Integer volId = idVol.intValue();
 
-            configPrixAgeService.configurerPrix(vol, siege, cat,
-                    form.getPrixBase(), form.getMultiplicateur());
+            Vol vol = volRepository.findById(volId)
+                    .orElseThrow(() -> new RuntimeException("Vol non trouvé avec l'ID: " + idVol));
+            System.out.println("Vol trouvé: " + vol.getNumeroVol());
 
+            TypeSiege siege = typeSiegeRepository.findById(form.getIdTypeSiege())
+                    .orElseThrow(
+                            () -> new RuntimeException("Type siège non trouvé avec l'ID: " + form.getIdTypeSiege()));
+            System.out.println("Siège trouvé: " + siege.getRubrique());
+
+            CategorieAge cat = categorieAgeRepository.findById(form.getIdCategorieAge().longValue())
+                    .orElseThrow(
+                            () -> new RuntimeException("Catégorie non trouvée avec l'ID: " + form.getIdCategorieAge()));
+            System.out.println("Catégorie trouvée: " + cat.getNom());
+
+            configPrixAgeService.configurerPrix(vol, siege, cat, form.getPrixBase(), form.getMultiplicateur());
+
+            System.out.println("Configuration réussie!");
             redirectAttributes.addFlashAttribute("success", "Prix configuré avec succès");
 
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Erreur lors de la configuration: " + e.getMessage());
+            System.err.println("Erreur lors de la configuration: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Erreur lors de la configuration: " + e.getMessage());
         }
 
+        System.out.println("=== Configuration FIN ===");
         return "redirect:/prix-age/vol/" + idVol;
-    }
-
-    /**
-     * Simulation des prix pour différents âges
-     */
-    @GetMapping("/vol/{idVol}/simulation")
-    public String simulationPrix(@PathVariable Long idVol, Model model) {
-        try {
-            Vol vol = volService.getVolById(idVol);
-            List<SimulationPrixDTO> simulation = configPrixAgeService.simulerPrixParAge(idVol);
-
-            model.addAttribute("vol", vol);
-            model.addAttribute("simulation", simulation);
-
-            return "prix-age/simulation";
-
-        } catch (Exception e) {
-            model.addAttribute("error", "Erreur lors de la simulation: " + e.getMessage());
-            return "redirect:/prix-age/vol/" + idVol;
-        }
     }
 
     /**

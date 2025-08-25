@@ -4,11 +4,14 @@ import com.itu.vol.dto.*;
 import com.itu.vol.model.*;
 import com.itu.vol.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -29,6 +32,9 @@ public class ConfigPrixAgeService {
     @Autowired
     private VolRepository volRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     /**
      * Initialise les prix de base pour un vol donné.
      * Crée un prix pour chaque type de siège et chaque catégorie d'âge.
@@ -36,7 +42,7 @@ public class ConfigPrixAgeService {
     public int initialiserPrixPourVol(Long idVol, BigDecimal prixEcoBase, BigDecimal prixBusinessBase) {
         int nbPrixCrees = 0;
 
-        Vol vol = volRepository.findById(idVol)
+        Vol vol = volRepository.findById(idVol.intValue())
                 .orElseThrow(() -> new RuntimeException("Vol non trouvé pour l'id: " + idVol));
 
         List<TypeSiege> sieges = typeSiegeRepository.findAll();
@@ -72,25 +78,74 @@ public class ConfigPrixAgeService {
 
     /**
      * Configure un prix spécifique pour un vol, type de siège et catégorie d'âge.
+     * Version corrigée avec debug
      */
     public void configurerPrix(Vol vol, TypeSiege siege, CategorieAge cat,
             BigDecimal prixBase, BigDecimal multiplicateur) {
 
-        PrixAgeVol prix = prixAgeVolRepository
-                .findByVolAndTypeSiegeAndCategorieAge(vol, siege, cat)
-                .orElseGet(() -> {
-                    PrixAgeVol newPrix = new PrixAgeVol();
-                    newPrix.setVol(vol);
-                    newPrix.setTypeSiege(siege);
-                    newPrix.setCategorieAge(cat);
-                    return newPrix;
-                });
+        System.out.println("=== SERVICE configurerPrix DEBUT ===");
+        System.out.println("Vol: " + vol.getId() + " - " + vol.getNumeroVol());
+        System.out.println("Siège: " + siege.getId() + " - " + siege.getRubrique());
+        System.out.println("Catégorie: " + cat.getId() + " - " + cat.getNom());
+        System.out.println("Prix base: " + prixBase);
+        System.out.println("Multiplicateur: " + multiplicateur);
 
-        prix.setPrixBase(prixBase);
-        prix.setMultiplicateur(multiplicateur);
-        prix.setPrixFinal(prix.getPrixBase().multiply(prix.getMultiplicateur()));
+        try {
+            // Rechercher un prix existant
+            Optional<PrixAgeVol> prixExistant = prixAgeVolRepository
+                    .findByVolAndTypeSiegeAndCategorieAge(vol, siege, cat);
 
-        prixAgeVolRepository.save(prix);
+            PrixAgeVol prix;
+            if (prixExistant.isPresent()) {
+                System.out.println("Mise à jour d'un prix existant");
+                prix = prixExistant.get();
+            } else {
+                System.out.println("Création d'un nouveau prix");
+                prix = new PrixAgeVol();
+                prix.setVol(vol);
+                prix.setTypeSiege(siege);
+                prix.setCategorieAge(cat);
+            }
+
+            // Configuration des valeurs
+            prix.setPrixBase(prixBase);
+            prix.setMultiplicateur(multiplicateur);
+
+            // Calcul du prix final
+            BigDecimal prixFinal = prixBase.multiply(multiplicateur);
+            prix.setPrixFinal(prixFinal);
+
+            System.out.println("Prix final calculé: " + prixFinal);
+
+            // Sauvegarde
+            PrixAgeVol savedPrix = prixAgeVolRepository.save(prix);
+            System.out.println("Prix sauvegardé avec ID: " + savedPrix.getId());
+
+            System.out.println("=== SERVICE configurerPrix SUCCÈS ===");
+
+        } catch (Exception e) {
+            System.err.println("=== SERVICE configurerPrix ERREUR ===");
+            System.err.println("Erreur: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Erreur lors de la configuration du prix: " + e.getMessage(), e);
+        }
+    }
+
+    public Map<Long, Double> getPrixSiegesByVol(Long idVol) {
+        Map<Long, Double> prixSieges = new HashMap<>();
+
+        // Requête pour récupérer les prix des sièges pour ce vol
+        String sql = "SELECT ps.id_type_siege, ps.prix_ " +
+                "FROM prix_siege_vol_ ps " +
+                "WHERE ps.id_vol = ?";
+
+        jdbcTemplate.query(sql, new Object[] { idVol }, (rs) -> {
+            Long typeSiegeId = rs.getLong("id_type_siege");
+            Double prix = rs.getDouble("prix_");
+            prixSieges.put(typeSiegeId, prix);
+        });
+
+        return prixSieges;
     }
 
     public CategorieAge updateCategorieAge(Long id, CategorieAgeDTO dto) throws Exception {
@@ -171,7 +226,7 @@ public class ConfigPrixAgeService {
         if (categorieOpt.isPresent()) {
             CategorieAge categorie = categorieOpt.get();
 
-            Vol vol = volRepository.findById(idVol)
+            Vol vol = volRepository.findById(idVol.intValue())
                     .orElseThrow(() -> new RuntimeException("Vol non trouvé pour l'id: " + idVol));
 
             TypeSiege siege = typeSiegeRepository.findById(idTypeSiege)

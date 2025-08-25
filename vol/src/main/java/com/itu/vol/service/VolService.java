@@ -20,7 +20,7 @@ public class VolService {
         return volRepository.findAll();
     }
 
-    public Vol getVolById(Long idVol) {
+    public Vol getVolById(Integer idVol) {
         Optional<Vol> vol = volRepository.findById(idVol);
         return vol.orElse(null);
     }

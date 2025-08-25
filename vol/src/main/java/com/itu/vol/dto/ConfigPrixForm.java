@@ -63,4 +63,14 @@ public class ConfigPrixForm {
     public void setMultiplicateur(BigDecimal multiplicateur) {
         this.multiplicateur = multiplicateur;
     }
+
+    @Override
+    public String toString() {
+        return "ConfigPrixForm{" +
+                "idTypeSiege=" + idTypeSiege +
+                ", idCategorieAge=" + idCategorieAge +
+                ", prixBase=" + prixBase +
+                ", multiplicateur=" + multiplicateur +
+                '}';
+    }
 }

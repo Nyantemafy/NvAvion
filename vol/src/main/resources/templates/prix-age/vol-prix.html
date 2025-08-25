@@ -266,6 +266,16 @@
             </div>
         </div>
 
+        <!-- Messages d'alerte -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i> <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
         <!-- Actions d'initialisation -->
         <div class="row mb-4">
             
@@ -281,7 +291,7 @@
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Type de siège</label>
-                                        <select class="form-select" th:field="*{idTypeSiege}" required>
+                                        <select class="form-select" th:field="*{idTypeSiege}" id="typeSiegeSelect" required>
                                             <option value="">Choisir...</option>
                                             <option th:each="siege : ${typeSieges}" 
                                                     th:value="${siege.id}" 
@@ -306,15 +316,17 @@
                                     <div class="mb-3">
                                         <label class="form-label">Prix de base</label>
                                         <div class="input-group">
-                                            <input type="number" step="0.01" class="form-control" th:field="*{prixBase}" required>
+                                            <input type="number" step="0.01" class="form-control" th:field="*{prixBase}" 
+                                                id="prixBaseInput" required>
                                             <span class="input-group-text">€</span>
                                         </div>
+                                        <small class="text-muted">Prix de base pour ce type de siège</small>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Multiplicateur</label>
-                                        <input type="number" step="0.01" class="form-control" th:field="*{multiplicateur}" required>
+                                        <input type="number" step="0.01" class="form-control" th:field="*{multiplicateur}" id="multiplicateurInput" required>
                                     </div>
                                 </div>
                             </div>
@@ -354,7 +366,6 @@
                                 <tr>
                                     <th>Type de Siège</th>
                                     <th>Catégorie d'Âge</th>
-                                    <th>Tranche d'Âge</th>
                                     <th>Prix Base</th>
                                     <th>Multiplicateur</th>
                                     <th>Prix Final</th>
@@ -364,19 +375,12 @@
                             <tbody>
                                 <tr th:each="prix : ${prixVol}">
                                     <td>
+                                        <!-- CORRECTION: Utiliser typeSiege au lieu de typeSegment -->
                                         <span class="badge" 
-                                              th:classappend="${prix.typeSegment == 'Économique' ? 'bg-success' : 'bg-warning'}"
-                                              th:text="${prix.typeSegment}">Économique</span>
+                                              th:classappend="${prix.typeSiege == 'Économique' ? 'bg-success' : 'bg-warning'}"
+                                              th:text="${prix.typeSiege}">Économique</span>
                                     </td>
-                                    <td th:text="${prix.nomCategorieAge}">Enfant</td>
-                                    <td>
-                                        <span th:text="${prix.ageMin}">0</span>
-                                        <span th:if="${prix.ageMax != null}">
-                                            - <span th:text="${prix.ageMax}">12</span>
-                                        </span>
-                                        <span th:if="${prix.ageMax == null}">+</span>
-                                        ans
-                                    </td>
+                                    <td th:text="${prix.categorieNom}">Enfant</td>
                                     <td th:text="${#numbers.formatDecimal(prix.prixBase, 0, 2)} + ' €'">200.00 €</td>
                                     <td>
                                         <span class="badge bg-info" th:text="${prix.multiplicateur}">0.5</span>
@@ -387,7 +391,7 @@
                                     </td>
                                     <td>
                                         <button class="btn btn-sm btn-outline-primary" 
-                                                th:onclick="'editPrix(' + ${prix.id} + ')'">
+                                                th:onclick="'editPrix(' + ${prix.idPrixAgeVol} + ')'">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                     </td>
@@ -398,14 +402,49 @@
                 </div>
             </div>
         </div>
+
+        <!-- Actions supplémentaires -->
+        <div class="row mt-4">
+            <div class="col text-center">
+                <a th:href="@{/prix-age}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Retour au Dashboard
+                </a>
+            </div>
+        </div>
     </div>
 
     <div layout:fragment="scripts">
-        <script>
-            // Calculateur de prix en temps réel amélioré
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            // Récupérer les prix des sièges depuis Thymeleaf
+            const prixSieges = /*[[${prixSieges}]]*/ {};
+            console.log("Prix sièges chargés:", prixSieges);
+            
+            function updatePrixBase(typeSiegeId) {
+                const prixBaseInput = document.getElementById('prixBaseInput');
+                const multiplicateurInput = document.getElementById('multiplicateurInput');
+                const prixFinalElement = document.getElementById('prixFinalCalculé');
+                
+                console.log("Mise à jour prix base pour typeSiege:", typeSiegeId);
+                
+                if (typeSiegeId && prixSieges[typeSiegeId]) {
+                    // Mettre à jour le prix de base
+                    prixBaseInput.value = prixSieges[typeSiegeId];
+                    console.log("Prix base mis à jour:", prixSieges[typeSiegeId]);
+                    
+                    // Déclencher le calcul du prix final
+                    if (multiplicateurInput.value) {
+                        calculatePrice();
+                    }
+                } else {
+                    prixBaseInput.value = '';
+                    console.log("Aucun prix trouvé pour ce type de siège");
+                }
+            }
+            
             function calculatePrice() {
-                const prixBase = parseFloat(document.querySelector('input[name="prixBase"]').value) || 0;
-                const multiplicateur = parseFloat(document.querySelector('input[name="multiplicateur"]').value) || 0;
+                const prixBase = parseFloat(document.getElementById('prixBaseInput').value) || 0;
+                const multiplicateur = parseFloat(document.getElementById('multiplicateurInput').value) || 0;
                 const prixFinalElement = document.getElementById('prixFinalCalculé');
                 
                 if (prixBase && multiplicateur) {
@@ -413,7 +452,6 @@
                     prixFinalElement.textContent = prixFinal.toFixed(2) + ' €';
                     prixFinalElement.classList.add('price-update');
                     
-                    // Retirer l'animation après completion
                     setTimeout(() => {
                         prixFinalElement.classList.remove('price-update');
                     }, 300);
@@ -422,17 +460,43 @@
                 }
             }
             
-            // Ajouter les événements
+            // Fonction d'édition
+            function editPrix(id) {
+                alert('Fonctionnalité d\'édition à implémenter pour le prix ID: ' + id);
+            }
+            
             document.addEventListener('DOMContentLoaded', function() {
-                const inputs = document.querySelectorAll('input[name="prixBase"], input[name="multiplicateur"]');
-                inputs.forEach(input => {
-                    input.addEventListener('input', calculatePrice);
-                    input.addEventListener('change', calculatePrice);
-                });
+                const typeSiegeSelect = document.getElementById('typeSiegeSelect');
+                const prixBaseInput = document.getElementById('prixBaseInput');
+                const multiplicateurInput = document.getElementById('multiplicateurInput');
                 
+                console.log("DOM chargé, typeSiegeSelect:", typeSiegeSelect);
+                
+                // Événements pour les calculs
+                if (typeSiegeSelect) {
+                    typeSiegeSelect.addEventListener('change', function() {
+                        updatePrixBase(this.value);
+                    });
+                }
+                
+                if (prixBaseInput) {
+                    prixBaseInput.addEventListener('input', calculatePrice);
+                }
+                
+                if (multiplicateurInput) {
+                    multiplicateurInput.addEventListener('input', calculatePrice);
+                    multiplicateurInput.addEventListener('change', calculatePrice);
+                }
+                
+                // Calcul initial si des valeurs existent
+                if (typeSiegeSelect && typeSiegeSelect.value) {
+                    updatePrixBase(typeSiegeSelect.value);
+                }
                 calculatePrice();
             });
+            /*]]>*/
         </script>
+
     </div>
 </body>
 </html>
