@@ -129,6 +129,7 @@ public class PrixAgeWebController {
      */
     @GetMapping("/vol/{idVol}")
     public String volPrix(@PathVariable Long idVol, Model model) {
+        System.out.println("Entrer dans configuration");
         try {
             Vol vol = volService.getVolById(idVol);
             if (vol == null) {
@@ -190,14 +191,17 @@ public class PrixAgeWebController {
             @Valid @ModelAttribute("configForm") ConfigPrixForm form,
             BindingResult result, RedirectAttributes redirectAttributes) {
 
+        System.out.println("=== Configuration ===");
+
         if (result.hasErrors()) {
+            System.out.println(result.getAllErrors());
             redirectAttributes.addFlashAttribute("error", "Configuration invalide");
             return "redirect:/prix-age/vol/" + idVol;
         }
 
         try {
             Vol vol = volRepository.findById(idVol).orElseThrow();
-            TypeSiege siege = typeSiegeRepository.findById(form.getIdTypeSiege().longValue()).orElseThrow();
+            TypeSiege siege = typeSiegeRepository.findById(form.getIdTypeSiege()).orElseThrow();
             CategorieAge cat = categorieAgeRepository.findById(form.getIdCategorieAge().longValue()).orElseThrow();
 
             configPrixAgeService.configurerPrix(vol, siege, cat,
@@ -245,7 +249,7 @@ public class PrixAgeWebController {
             PrixCalculeResponse response = new PrixCalculeResponse();
 
             for (TypeSiege typeSiege : typeSieges) {
-                BigDecimal prix = configPrixAgeService.calculerPrixPourAge(idVol, typeSiege.getId(), age);
+                BigDecimal prix = configPrixAgeService.calculerPrixPourAge(idVol, typeSiege.getId().intValue(), age);
                 if ("Économique".equals(typeSiege.getRubrique())) {
                     response.setPrixEco(prix);
                 } else if ("Business".equals(typeSiege.getRubrique())) {

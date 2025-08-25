@@ -10,12 +10,12 @@ public class TypeSiege {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_type_siege")
-    private Long id;
+    private Integer id;
 
     @Column(length = 50)
     private String rubrique;
 
-    @Column(precision = 15, scale = 2)
+    @Column(name = "prix_", precision = 15, scale = 2)
     private BigDecimal prix;
 
     // --- Constructeurs ---
@@ -28,7 +28,7 @@ public class TypeSiege {
     }
 
     // --- Getters & Setters ---
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 

@@ -5,11 +5,11 @@ import java.time.LocalDateTime;
 
 public class PrixAgeVolDTO {
     private Long idPrixAgeVol;
-    private Long idVol;
+    private Integer idVol;
     private String numeroVol;
-    private Long idTypeSiege;
+    private Integer idTypeSiege;
     private String typeSiege;
-    private Long idCategorieAge;
+    private Integer idCategorieAge;
     private String categorieNom;
     private BigDecimal prixBase;
     private BigDecimal multiplicateur;
@@ -29,11 +29,11 @@ public class PrixAgeVolDTO {
         this.idPrixAgeVol = idPrixAgeVol;
     }
 
-    public Long getIdVol() {
+    public Integer getIdVol() {
         return idVol;
     }
 
-    public void setIdVol(Long idVol) {
+    public void setIdVol(Integer idVol) {
         this.idVol = idVol;
     }
 
@@ -45,11 +45,11 @@ public class PrixAgeVolDTO {
         this.numeroVol = numeroVol;
     }
 
-    public Long getIdTypeSiege() {
+    public Integer getIdTypeSiege() {
         return idTypeSiege;
     }
 
-    public void setIdTypeSiege(Long idTypeSiege) {
+    public void setIdTypeSiege(Integer idTypeSiege) {
         this.idTypeSiege = idTypeSiege;
     }
 
@@ -61,11 +61,11 @@ public class PrixAgeVolDTO {
         this.typeSiege = typeSiege;
     }
 
-    public Long getIdCategorieAge() {
+    public Integer getIdCategorieAge() {
         return idCategorieAge;
     }
 
-    public void setIdCategorieAge(Long idCategorieAge) {
+    public void setIdCategorieAge(Integer idCategorieAge) {
         this.idCategorieAge = idCategorieAge;
     }
 

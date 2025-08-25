@@ -133,12 +133,12 @@ public class ConfigPrixAgeService {
             }
 
             if (p.getTypeSiege() != null) {
-                dto.setIdTypeSiege(p.getTypeSiege().getId());
+                dto.setIdTypeSiege(p.getTypeSiege().getId().intValue());
                 dto.setTypeSiege(p.getTypeSiege().getRubrique());
             }
 
-            if (p.getCategorieAge() != null) {
-                dto.setIdCategorieAge(p.getCategorieAge().getId());
+            if (p.getCategorieAge() != null && p.getCategorieAge().getId() != null) {
+                dto.setIdCategorieAge(p.getCategorieAge().getId().intValue());
                 dto.setCategorieNom(p.getCategorieAge().getNom());
             }
 
@@ -165,7 +165,7 @@ public class ConfigPrixAgeService {
     /**
      * Calculer le prix pour un âge spécifique
      */
-    public BigDecimal calculerPrixPourAge(Long idVol, Long idTypeSiege, Integer age) {
+    public BigDecimal calculerPrixPourAge(Long idVol, Integer idTypeSiege, Integer age) {
         Optional<CategorieAge> categorieOpt = categorieAgeRepository.findCategorieForAge(age);
 
         if (categorieOpt.isPresent()) {
@@ -211,10 +211,10 @@ public class ConfigPrixAgeService {
                     simulation.setCategorieAge(getCategorieForAge(age));
 
                     // Prix économique
-                    simulation.setPrixEconomique(calculerPrixPourAge(idVol, 1L, age));
+                    simulation.setPrixEconomique(calculerPrixPourAge(idVol, 1, age));
 
                     // Prix business
-                    simulation.setPrixBusiness(calculerPrixPourAge(idVol, 2L, age));
+                    simulation.setPrixBusiness(calculerPrixPourAge(idVol, 2, age));
 
                     // Multiplicateur
                     Optional<CategorieAge> categorie = categorieAgeRepository.findCategorieForAge(age);
@@ -226,7 +226,7 @@ public class ConfigPrixAgeService {
                 .toList();
     }
 
-    private BigDecimal getPrixStandardParDefaut(Long idTypeSiege) {
+    private BigDecimal getPrixStandardParDefaut(Integer idTypeSiege) {
         return idTypeSiege == 1L ? new BigDecimal("200") : new BigDecimal("500");
     }
 }

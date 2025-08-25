@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 public class CategorieAge {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_categorie_age")
-    private Long id;
+    @Column(name = "id_categorie_age", columnDefinition = "serial")
+    private Integer id;
 
     @Column(name = "nom", length = 50, nullable = false)
     private String nom;
@@ -46,11 +46,11 @@ public class CategorieAge {
     }
 
     // Getters et Setters
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

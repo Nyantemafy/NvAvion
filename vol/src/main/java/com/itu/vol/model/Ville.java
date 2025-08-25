@@ -9,7 +9,7 @@ public class Ville {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_ville")
-    private Long id;
+    private Integer id;
 
     @Column(length = 50)
     private String nom;
@@ -23,7 +23,7 @@ public class Ville {
     }
 
     // --- Getters & Setters ---
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 

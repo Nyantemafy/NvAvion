@@ -2,6 +2,248 @@
 <html layout:decorate="~{layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Configuration Prix Vol - <span th:text="${vol?.numeroVol}">Vol</span></title>
+    <style>
+        /* Variables de couleurs thème aviation */
+        :root {
+            --primary-color: #1a4f8b;
+            --secondary-color: #2c6aa0;
+            --accent-color: #ff9d00;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-muted: #6c757d;
+        }
+
+        /* En-tête amélioré */
+        .breadcrumb {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+        }
+
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 i {
+            color: var(--accent-color);
+            margin-right: 0.5rem;
+        }
+
+        /* Cartes améliorées */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 1rem 1.5rem;
+            border: none;
+        }
+
+        .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .card-header h5 i {
+            margin-right: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Formulaires améliorés */
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(255, 157, 0, 0.25);
+        }
+
+        .input-group-text {
+            background-color: var(--light-bg);
+            border: 2px solid var(--border-color);
+            border-left: none;
+            color: var(--text-muted);
+        }
+
+        /* Boutons améliorés */
+        .btn {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--info-color), #138496);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #218838);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Tableau amélioré */
+        .table-responsive {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .table {
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table-dark {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .table th {
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: var(--border-color);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(26, 79, 139, 0.05);
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        /* Badges améliorés */
+        .badge {
+            padding: 0.5rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .bg-success {
+            background: linear-gradient(135deg, var(--success-color), #218838) !important;
+        }
+
+        .bg-warning {
+            background: linear-gradient(135deg, var(--warning-color), #e0a800) !important;
+            color: #000 !important;
+        }
+
+        .bg-info {
+            background: linear-gradient(135deg, var(--info-color), #138496) !important;
+        }
+
+        /* États vides */
+        .text-center.py-4 {
+            padding: 3rem !important;
+        }
+
+        .text-center.py-4 i {
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .table th, .table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Animation pour les calculs de prix */
+        @keyframes priceUpdate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .price-update {
+            animation: priceUpdate 0.3s ease;
+        }
+    </style>
 </head>
 <body>
     <div layout:fragment="content">
@@ -18,54 +260,14 @@
                     Configuration Prix - <span th:text="${vol.numeroVol}">AF123</span>
                 </h2>
                 <p class="text-muted">
-                    <i class="fas fa-map-marker-alt"></i> Destination: <span th:text="${vol.villeDestination}">Paris</span> |
+                    <i class="fas fa-map-marker-alt"></i> Destination: <span th:text="${vol.ville.nom}">Paris</span> |
                     <i class="fas fa-calendar"></i> Date: <span th:text="${#temporals.format(vol.dateVol, 'dd/MM/yyyy HH:mm')}">01/01/2024</span>
                 </p>
-            </div>
-            <div class="col-auto">
-                <a th:href="@{/prix-age/vol/{id}/simulation(id=${vol.id})}" class="btn btn-info">
-                    <i class="fas fa-chart-line"></i> Simulation
-                </a>
             </div>
         </div>
 
         <!-- Actions d'initialisation -->
         <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-rocket"></i> Initialisation Rapide</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">Configurez automatiquement tous les prix avec des valeurs de base</p>
-                        <form th:action="@{/prix-age/vol/{id}/initialiser(id=${vol.id})}" method="post" th:object="${initForm}">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Prix Économique de base</label>
-                                        <div class="input-group">
-                                            <input type="number" step="0.01" class="form-control" th:field="*{prixEcoBase}" required>
-                                            <span class="input-group-text">€</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Prix Business de base</label>
-                                        <div class="input-group">
-                                            <input type="number" step="0.01" class="form-control" th:field="*{prixBusinessBase}" required>
-                                            <span class="input-group-text">€</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-magic"></i> Initialiser tous les prix
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
             
             <div class="col-md-6">
                 <div class="card">
@@ -113,6 +315,14 @@
                                     <div class="mb-3">
                                         <label class="form-label">Multiplicateur</label>
                                         <input type="number" step="0.01" class="form-control" th:field="*{multiplicateur}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="alert alert-info" role="alert">
+                                        <i class="fas fa-calculator"></i> Prix final: 
+                                        <strong id="prixFinalCalculé" class="text-success">0.00 €</strong>
                                     </div>
                                 </div>
                             </div>
@@ -192,14 +402,23 @@
 
     <div layout:fragment="scripts">
         <script>
-            // Calculateur de prix en temps réel
+            // Calculateur de prix en temps réel amélioré
             function calculatePrice() {
-                const prixBase = document.querySelector('input[name="prixBase"]').value;
-                const multiplicateur = document.querySelector('input[name="multiplicateur"]').value;
+                const prixBase = parseFloat(document.querySelector('input[name="prixBase"]').value) || 0;
+                const multiplicateur = parseFloat(document.querySelector('input[name="multiplicateur"]').value) || 0;
+                const prixFinalElement = document.getElementById('prixFinalCalculé');
                 
                 if (prixBase && multiplicateur) {
-                    const prixFinal = parseFloat(prixBase) * parseFloat(multiplicateur);
-                    console.log('Prix final calculé:', prixFinal.toFixed(2) + ' €');
+                    const prixFinal = prixBase * multiplicateur;
+                    prixFinalElement.textContent = prixFinal.toFixed(2) + ' €';
+                    prixFinalElement.classList.add('price-update');
+                    
+                    // Retirer l'animation après completion
+                    setTimeout(() => {
+                        prixFinalElement.classList.remove('price-update');
+                    }, 300);
+                } else {
+                    prixFinalElement.textContent = '0.00 €';
                 }
             }
             
@@ -208,7 +427,10 @@
                 const inputs = document.querySelectorAll('input[name="prixBase"], input[name="multiplicateur"]');
                 inputs.forEach(input => {
                     input.addEventListener('input', calculatePrice);
+                    input.addEventListener('change', calculatePrice);
                 });
+                
+                calculatePrice();
             });
         </script>
     </div>

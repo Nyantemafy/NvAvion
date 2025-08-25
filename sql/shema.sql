@@ -58,6 +58,10 @@ CREATE TABLE vol(
    FOREIGN KEY(Id_avion) REFERENCES avion(Id_avion)
 );
 
+ALTER TABLE vol 
+    ALTER COLUMN id_avion TYPE BIGINT 
+    USING id_avion::bigint;
+
 CREATE TABLE promotion(
    Id_promotion SERIAL,
    nom VARCHAR(50) ,
@@ -131,6 +135,8 @@ CREATE TABLE prix_age_vol (
     UNIQUE(id_vol, id_type_siege, id_categorie_age)
 );
 
+ALTER TABLE prix_age_vol 
+ALTER COLUMN id_prix_age_vol TYPE BIGINT;
 
 CREATE VIEW v_user_age_category AS
 SELECT 

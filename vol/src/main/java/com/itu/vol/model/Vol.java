@@ -10,7 +10,7 @@ public class Vol {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_vol")
-    private Long id;
+    private Integer id;
 
     @Column(name = "numero_vol_", length = 50)
     private String numeroVol;
@@ -38,7 +38,7 @@ public class Vol {
     }
 
     // --- Getters & Setters ---
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
