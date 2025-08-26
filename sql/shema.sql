@@ -135,6 +135,15 @@ CREATE TABLE prix_age_vol (
     UNIQUE(id_vol, id_type_siege, id_categorie_age)
 );
 
+ALTER TABLE promotion
+ADD COLUMN id_categorie_age INTEGER NULL;
+
+ALTER TABLE promotion
+ADD CONSTRAINT promotion_id_categorie_age_fkey 
+    FOREIGN KEY (id_categorie_age) 
+    REFERENCES categorie_age(id_categorie_age);
+
+
 ALTER TABLE prix_age_vol 
 ALTER COLUMN id_prix_age_vol TYPE BIGINT;
 

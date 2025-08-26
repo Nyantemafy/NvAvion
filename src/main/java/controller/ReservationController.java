@@ -18,8 +18,6 @@ import java.net.http.HttpResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 @AnnotedController
 public class ReservationController {
     private ReservationService reservationService = new ReservationService();
@@ -159,7 +157,7 @@ public class ReservationController {
             return mv;
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors du chargement du formulaire de création:");
+            System.err.println("❌ Erreur lors du chargement du formulaire de modification:");
             e.printStackTrace();
 
             ModelView mv = new ModelView("views/reservations/list.jsp");
@@ -177,7 +175,6 @@ public class ReservationController {
             @Param(name = "dateReservation") String dateReservationStr,
             @Param(name = "idVol") String idVolStr,
             @Param(name = "idUser") String idUserStr,
-            HttpServletRequest request,
             CurrentSession session) {
 
         User user = (User) session.get("user");
@@ -188,7 +185,6 @@ public class ReservationController {
         }
 
         try {
-            // Conversion des paramètres de base
             LocalDateTime dateReservation = dateReservationStr != null && !dateReservationStr.isEmpty()
                     ? LocalDateTime.parse(dateReservationStr.replace(" ", "T"))
                     : LocalDateTime.now();
@@ -196,7 +192,6 @@ public class ReservationController {
             Long idVol = parseLongSafe(idVolStr);
             Long idUser = parseLongSafe(idUserStr);
 
-            // Validation de base
             if (idVol == null || idUser == null) {
                 ModelView mv = new ModelView("views/reservations/create.jsp");
                 mv.addObject("error", "Veuillez sélectionner un vol et un utilisateur");
@@ -207,13 +202,12 @@ public class ReservationController {
                 return mv;
             }
 
-            // Récupérer les quantités par catégorie d'âge depuis les paramètres de la
-            // requête
+            // 👉 On utilise session.getParameterMap() au lieu de request.getParameterMap()
+            Map<String, String[]> parameterMap = session.getParameterMap();
+
             Map<Long, Integer> siegeBusinessParCategorie = new HashMap<>();
             Map<Long, Integer> siegeEcoParCategorie = new HashMap<>();
 
-            // Parcourir tous les paramètres pour trouver ceux des sièges
-            Map<String, String[]> parameterMap = request.getParameterMap();
             for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
                 String paramName = entry.getKey();
                 String paramValue = entry.getValue()[0];
@@ -233,7 +227,6 @@ public class ReservationController {
                 }
             }
 
-            // Vérifier qu'au moins un siège est réservé
             if (siegeBusinessParCategorie.isEmpty() && siegeEcoParCategorie.isEmpty()) {
                 ModelView mv = new ModelView("views/reservations/create.jsp");
                 mv.addObject("error", "Veuillez réserver au moins un siège");
@@ -244,46 +237,30 @@ public class ReservationController {
                 return mv;
             }
 
-            // Création de l'objet réservation avec les nouvelles données
             Reservation reservation = new Reservation();
             reservation.setDateReservation(dateReservation);
             reservation.setIdVol(idVol);
             reservation.setIdUser(idUser);
-
-            // Définir les sièges par catégorie
             reservation.setSiegeBusinessParCategorie(siegeBusinessParCategorie);
             reservation.setSiegeEcoParCategorie(siegeEcoParCategorie);
 
-            // Calculer les totaux pour compatibilité (optionnel)
             int totalBusiness = siegeBusinessParCategorie.values().stream().mapToInt(Integer::intValue).sum();
             int totalEco = siegeEcoParCategorie.values().stream().mapToInt(Integer::intValue).sum();
             reservation.setSiegeBusiness(totalBusiness);
             reservation.setSiegeEco(totalEco);
 
-            System.out.println("🎫 Création réservation:");
-            System.out.println("   - Vol: " + idVol);
-            System.out.println("   - User: " + idUser);
-            System.out.println("   - Sièges Business par catégorie: " + siegeBusinessParCategorie);
-            System.out.println("   - Sièges Eco par catégorie: " + siegeEcoParCategorie);
-
             boolean success = reservationService.createReservation(reservation);
 
             if (success) {
-                // Récupérer la réservation créée avec le prix calculé
                 Reservation createdReservation = reservationService.findReservationById(reservation.getIdReservation());
-
                 ModelView mv = new ModelView("views/reservations/details.jsp");
                 mv.addObject("reservation", createdReservation);
                 mv.addObject("user", user);
-                mv.addObject("success",
-                        "Réservation créée avec succès ! Prix calculé: " + createdReservation.getPrixTotal() + "€");
-
-                // Ajouter les détails de prix pour affichage
-                List<PrixDetail> prixDetails = reservationService.getPrixDetailsForUser(
+                mv.addObject("success", "Réservation créée avec succès ! Prix calculé: "
+                        + createdReservation.getPrixTotal() + "€");
+                mv.addObject("prixDetails", reservationService.getPrixDetailsForUser(
                         createdReservation.getIdVol(),
-                        createdReservation.getIdUser());
-                mv.addObject("prixDetails", prixDetails);
-
+                        createdReservation.getIdUser()));
                 return mv;
             } else {
                 ModelView mv = new ModelView("views/reservations/create.jsp");
@@ -296,9 +273,7 @@ public class ReservationController {
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la création de la réservation:");
             e.printStackTrace();
-
             ModelView mv = new ModelView("views/reservations/create.jsp");
             mv.addObject("error", "Erreur lors du traitement de la réservation: " + e.getMessage());
             mv.addObject("user", user);
@@ -306,77 +281,11 @@ public class ReservationController {
                 mv.addObject("vols", volService.findAllVols());
                 mv.addObject("users", userService.findAllUsers());
                 mv.addObject("categoriesAge", categorieAgeService.findAllCategories());
-            } catch (Exception ex) {
-                // Ignore les erreurs secondaires
+            } catch (Exception ignore) {
             }
             return mv;
         }
     }
-
-    // @POST("createReservation")
-    // @AnnotedMth("createReservation")
-    // public ModelView createReservation(
-    // @Param(name = "dateReservation") String dateReservationStr,
-    // @Param(name = "prixTotal") String prixTotalStr,
-    // @Param(name = "idVol") String idVolStr,
-    // @Param(name = "idUser") String idUserStr,
-    // @Param(name = "siegeBusiness") String siegeBusinessStr,
-    // @Param(name = "siegeEco") String siegeEcoStr,
-    // CurrentSession session) {
-
-    // User user = (User) session.get("user");
-    // if (user == null) {
-    // ModelView mv = new ModelView("views/login.jsp");
-    // mv.addObject("error", "Vous devez vous connecter d'abord");
-    // return mv;
-    // }
-
-    // try {
-    // // Conversion des paramètres
-    // LocalDateTime dateReservation = dateReservationStr != null &&
-    // !dateReservationStr.isEmpty()
-    // ? LocalDateTime.parse(dateReservationStr.replace(" ", "T"))
-    // : LocalDateTime.now();
-
-    // BigDecimal prixTotal = parseBigDecimalSafe(prixTotalStr);
-    // Long idVol = parseLongSafe(idVolStr);
-    // Long idUser = parseLongSafe(idUserStr);
-    // Integer siegeBusiness = parseIntegerSafe(siegeBusinessStr);
-    // Integer siegeEco = parseIntegerSafe(siegeEcoStr);
-
-    // // Création de l'objet réservation
-    // Reservation reservation = new Reservation();
-    // reservation.setDateReservation(dateReservation);
-    // reservation.setPrixTotal(prixTotal);
-    // reservation.setIdVol(idVol);
-    // reservation.setIdUser(idUser);
-    // reservation.setSiegeBusiness(siegeBusiness);
-    // reservation.setSiegeEco(siegeEco);
-
-    // boolean success = reservationService.createReservation(reservation);
-
-    // if (success) {
-    // ModelView mv = new ModelView("views/reservations/detail.jsp");
-    // mv.addObject("reservation", reservation);
-    // mv.addObject("user", user);
-    // mv.addObject("success", "Réservation créée avec succès !");
-    // return mv;
-    // } else {
-    // ModelView mv = new ModelView("views/reservations/create.jsp");
-    // mv.addObject("error", "Échec lors de la création de la réservation");
-    // return mv;
-    // }
-
-    // } catch (Exception e) {
-    // System.err.println("❌ Erreur lors de la création de la réservation:");
-    // e.printStackTrace();
-
-    // ModelView mv = new ModelView("views/reservations/create.jsp");
-    // mv.addObject("error", "Erreur lors du traitement de la réservation: " +
-    // e.getMessage());
-    // return mv;
-    // }
-    // }
 
     private BigDecimal parseBigDecimalSafe(String value) {
         try {
@@ -402,53 +311,55 @@ public class ReservationController {
         }
     }
 
-    // /**
-    // * Afficher le formulaire de modification d'une réservation
-    // */
-    // @AnnotedMth("editReservationForm")
-    // public ModelView showEditReservationForm(@Param(name = "id") String idStr,
-    // CurrentSession session) {
-    // User user = (User) session.get("user");
-    // if (user == null || !"ADMIN".equals(user.getRole())) {
-    // ModelView mv = new ModelView("views/login.jsp");
-    // mv.addObject("error", "Accès non autorisé");
-    // return mv;
-    // }
+    /**
+     * Afficher le formulaire de modification d'une réservation
+     */
+    @AnnotedMth("editReservationForm")
+    public ModelView showEditReservationForm(@Param(name = "id") String idStr,
+            CurrentSession session) {
+        User user = (User) session.get("user");
 
-    // try {
-    // Long id = Long.parseLong(idStr);
-    // Reservation reservation = reservationService.findReservationById(id);
+        if (user == null || !"ADMIN".equals(user.getRole())) {
+            ModelView mv = new ModelView("views/login.jsp");
+            mv.addObject("error", "Accès non autorisé");
+            return mv;
+        }
 
-    // if (reservation == null) {
-    // ModelView mv = new ModelView("reservations");
-    // session.add("errorMessage", "Réservation non trouvée");
-    // return mv;
-    // }
+        try {
+            Long id = Long.parseLong(idStr);
+            Reservation reservation = reservationService.findReservationById(id);
 
-    // List<Vol> vols = volService.findAllVols();
-    // List<User> users = userService.findAllUsers();
+            if (reservation == null) {
+                ModelView mv = new ModelView("reservations");
+                session.add("errorMessage", "Réservation non trouvée");
+                return mv;
+            }
 
-    // ModelView mv = new ModelView("views/reservations/edit.jsp");
-    // mv.addObject("user", user);
-    // mv.addObject("reservation", reservation);
-    // mv.addObject("vols", vols);
-    // mv.addObject("users", users);
-    // return mv;
+            List<Vol> vols = volService.findAllVols();
+            List<User> users = userService.findAllUsers();
+            List<CategorieAge> categoriesAge = categorieAgeService.findAllCategories();
 
-    // } catch (NumberFormatException e) {
-    // ModelView mv = new ModelView("reservations");
-    // session.add("errorMessage", "ID de réservation invalide");
-    // return mv;
-    // } catch (Exception e) {
-    // System.err.println("❌ Erreur lors du chargement du formulaire de
-    // modification:");
-    // e.printStackTrace();
+            ModelView mv = new ModelView("views/reservations/edit.jsp");
+            mv.addObject("user", user);
+            mv.addObject("reservation", reservation);
+            mv.addObject("vols", vols);
+            mv.addObject("users", users);
+            mv.addObject("categoriesAge", categoriesAge);
+            return mv;
 
-    // ModelView mv = new ModelView("reservations");
-    // session.add("errorMessage", "Erreur lors du chargement du formulaire");
-    // return mv;
-    // }
-    // }
+        } catch (NumberFormatException e) {
+            ModelView mv = new ModelView("reservations");
+            session.add("errorMessage", "ID de réservation invalide");
+            return mv;
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors du chargement du formulaire de modification:");
+            e.printStackTrace();
+
+            ModelView mv = new ModelView("reservations");
+            session.add("errorMessage", "Erreur lors du chargement du formulaire");
+            return mv;
+        }
+    }
 
     /**
      * Mettre à jour une réservation
@@ -460,8 +371,6 @@ public class ReservationController {
             @Param(name = "dateReservation") String dateReservationStr,
             @Param(name = "idVol") String idVolStr,
             @Param(name = "idUser") String idUserStr,
-            @Param(name = "siegeBusiness") String siegeBusinessStr,
-            @Param(name = "siegeEco") String siegeEcoStr,
             CurrentSession session) {
 
         User user = (User) session.get("user");
@@ -472,7 +381,6 @@ public class ReservationController {
         }
 
         try {
-            // Conversion des paramètres
             Long id = Long.parseLong(idStr);
             LocalDateTime dateReservation = dateReservationStr != null && !dateReservationStr.isEmpty()
                     ? LocalDateTime.parse(dateReservationStr.replace(" ", "T"))
@@ -480,21 +388,65 @@ public class ReservationController {
 
             Long idVol = parseLongSafe(idVolStr);
             Long idUser = parseLongSafe(idUserStr);
-            Integer siegeBusiness = parseIntegerSafe(siegeBusinessStr);
-            Integer siegeEco = parseIntegerSafe(siegeEcoStr);
 
-            // Construction de l'objet Reservation (le prix sera recalculé automatiquement
-            // dans le service)
+            // Récupérer toutes les quantités dynamiques pour les catégories d'âge
+            Map<String, String[]> parameterMap = session.getParameterMap();
+            Map<Long, Integer> siegeBusinessParCategorie = new HashMap<>();
+            Map<Long, Integer> siegeEcoParCategorie = new HashMap<>();
+
+            for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+                String paramName = entry.getKey();
+                String paramValue = entry.getValue()[0];
+
+                if (paramName.startsWith("siegeBusiness_")) {
+                    Long categorieId = Long.parseLong(paramName.substring("siegeBusiness_".length()));
+                    Integer qty = parseIntegerSafe(paramValue);
+                    if (qty > 0)
+                        siegeBusinessParCategorie.put(categorieId, qty);
+                } else if (paramName.startsWith("siegeEco_")) {
+                    Long categorieId = Long.parseLong(paramName.substring("siegeEco_".length()));
+                    Integer qty = parseIntegerSafe(paramValue);
+                    if (qty > 0)
+                        siegeEcoParCategorie.put(categorieId, qty);
+                }
+            }
+
+            if (siegeBusinessParCategorie.isEmpty() && siegeEcoParCategorie.isEmpty()) {
+                // renvoyer au formulaire avec message d'erreur
+                Reservation reservation = reservationService.findReservationById(id);
+                List<Vol> vols = volService.findAllVols();
+                List<User> users = userService.findAllUsers();
+                List<CategorieAge> categoriesAge = categorieAgeService.findAllCategories();
+
+                ModelView mv = new ModelView("views/reservations/edit.jsp");
+                mv.addObject("user", user);
+                mv.addObject("reservation", reservation);
+                mv.addObject("vols", vols);
+                mv.addObject("users", users);
+                mv.addObject("categoriesAge", categoriesAge);
+                mv.addObject("error", "Veuillez réserver au moins un siège");
+                return mv;
+            }
+
+            // Créer l'objet Reservation pour mise à jour
             Reservation reservation = new Reservation();
             reservation.setIdReservation(id);
             reservation.setDateReservation(dateReservation);
             reservation.setIdVol(idVol);
             reservation.setIdUser(idUser);
-            reservation.setSiegeBusiness(siegeBusiness);
-            reservation.setSiegeEco(siegeEco);
+            reservation.setSiegeBusinessParCategorie(siegeBusinessParCategorie);
+            reservation.setSiegeEcoParCategorie(siegeEcoParCategorie);
 
-            if (reservationService.updateReservation(reservation)) {
-                session.add("successMessage", "Réservation mise à jour avec succès ! Prix recalculé automatiquement.");
+            // Calculer le total général (pour compatibilité)
+            int totalBusiness = siegeBusinessParCategorie.values().stream().mapToInt(Integer::intValue).sum();
+            int totalEco = siegeEcoParCategorie.values().stream().mapToInt(Integer::intValue).sum();
+            reservation.setSiegeBusiness(totalBusiness);
+            reservation.setSiegeEco(totalEco);
+
+            boolean success = reservationService.updateReservation(reservation);
+
+            if (success) {
+                session.add("successMessage", "Réservation mise à jour avec succès !");
                 return new ModelView("reservations");
             } else {
                 throw new Exception("Échec de la mise à jour");
@@ -509,12 +461,14 @@ public class ReservationController {
                 Reservation reservation = reservationService.findReservationById(id);
                 List<Vol> vols = volService.findAllVols();
                 List<User> users = userService.findAllUsers();
+                List<CategorieAge> categoriesAge = categorieAgeService.findAllCategories();
 
                 ModelView mv = new ModelView("views/reservations/edit.jsp");
                 mv.addObject("user", session.get("user"));
                 mv.addObject("reservation", reservation);
                 mv.addObject("vols", vols);
                 mv.addObject("users", users);
+                mv.addObject("categoriesAge", categoriesAge);
                 mv.addObject("error", "Erreur lors de la mise à jour: " + e.getMessage());
                 return mv;
             } catch (Exception ex) {
@@ -524,75 +478,6 @@ public class ReservationController {
             }
         }
     }
-
-    // @POST("updateReservation")
-    // @AnnotedMth("updateReservation")
-    // public ModelView updateReservation(
-    // @Param(name = "id") String idStr,
-    // @Param(name = "dateReservation") String dateReservationStr,
-    // @Param(name = "prixTotal") String prixTotalStr,
-    // @Param(name = "idVol") String idVolStr,
-    // @Param(name = "idUser") String idUserStr,
-    // @Param(name = "siegeBusiness") String siegeBusinessStr,
-    // @Param(name = "siegeEco") String siegeEcoStr,
-    // CurrentSession session) {
-
-    // User user = (User) session.get("user");
-    // if (user == null || !"ADMIN".equals(user.getRole())) {
-    // ModelView mv = new ModelView("views/login.jsp");
-    // mv.addObject("error", "Accès non autorisé");
-    // return mv;
-    // }
-
-    // try {
-    // // Conversion des paramètres
-    // Long id = Long.parseLong(idStr);
-    // LocalDateTime dateReservation = dateReservationStr != null &&
-    // !dateReservationStr.isEmpty()
-    // ? LocalDateTime.parse(dateReservationStr.replace(" ", "T"))
-    // : LocalDateTime.now();
-
-    // BigDecimal prixTotal = parseBigDecimalSafe(prixTotalStr);
-    // Long idVol = parseLongSafe(idVolStr);
-    // Long idUser = parseLongSafe(idUserStr);
-    // Integer siegeBusiness = parseIntegerSafe(siegeBusinessStr);
-    // Integer siegeEco = parseIntegerSafe(siegeEcoStr);
-
-    // // Construction de l'objet Reservation
-    // Reservation reservation = new Reservation();
-    // reservation.setIdReservation(id);
-    // reservation.setDateReservation(dateReservation);
-    // reservation.setPrixTotal(prixTotal);
-    // reservation.setIdVol(idVol);
-    // reservation.setIdUser(idUser);
-    // reservation.setSiegeBusiness(siegeBusiness);
-    // reservation.setSiegeEco(siegeEco);
-
-    // if (reservationService.updateReservation(reservation)) {
-    // session.add("successMessage", "Réservation mise à jour avec succès !");
-    // return new ModelView("reservations");
-    // } else {
-    // throw new Exception("Échec de la mise à jour");
-    // }
-
-    // } catch (Exception e) {
-    // System.err.println("❌ Erreur lors de la mise à jour de la réservation:");
-    // e.printStackTrace();
-
-    // Long id = Long.parseLong(idStr);
-    // Reservation reservation = reservationService.findReservationById(id);
-    // List<Vol> vols = volService.findAllVols();
-    // List<User> users = userService.findAllUsers();
-
-    // ModelView mv = new ModelView("views/reservations/edit.jsp");
-    // mv.addObject("user", session.get("user"));
-    // mv.addObject("reservation", reservation);
-    // mv.addObject("vols", vols);
-    // mv.addObject("users", users);
-    // mv.addObject("error", "Erreur lors de la mise à jour: " + e.getMessage());
-    // return mv;
-    // }
-    // }
 
     /**
      * Supprimer une réservation
@@ -837,65 +722,4 @@ public class ReservationController {
 
         return dto;
     }
-
-    /**
-     * API pour calculer le prix d'une réservation en AJAX
-     */
-    @POST("calculatePrice")
-    @AnnotedMth("calculatePrice")
-    public ModelView calculatePrice(
-            @Param(name = "idVol") String idVolStr,
-            @Param(name = "quantities") String quantitiesJson,
-            CurrentSession session) {
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            System.out.println("=== CALCUL PRIX DÉBUT ===");
-            System.out.println("ID Vol: " + idVolStr);
-            System.out.println("Quantités: " + quantitiesJson);
-
-            // Vérification des paramètres
-            if (idVolStr == null || idVolStr.isEmpty() || quantitiesJson == null || quantitiesJson.isEmpty()) {
-                response.put("success", false);
-                response.put("error", "Paramètres manquants");
-
-                ModelView mv = new ModelView("views/api/json.jsp");
-                mv.addObject("data", response);
-                return mv;
-            }
-
-            Long idVol = parseLongSafe(idVolStr);
-            if (idVol == null) {
-                response.put("success", false);
-                response.put("error", "ID de vol invalide");
-            } else {
-                // Parser les quantités
-                Map<Long, Map<String, Integer>> quantities = reservationService.parseQuantities(quantitiesJson);
-                System.out.println("Quantités parsées: " + quantities);
-
-                // Calculer le prix
-                BigDecimal prixTotal = reservationService.calculateReservationPrice(idVol, quantities);
-                List<PrixDetail> details = reservationService.getPrixDetailsForVol(idVol, quantities);
-
-                System.out.println("Prix total calculé: " + prixTotal);
-                System.out.println("Détails: " + details);
-
-                response.put("prixTotal", prixTotal);
-                response.put("details", details);
-                response.put("success", true);
-            }
-        } catch (Exception e) {
-            System.err.println("Erreur lors du calcul du prix: " + e.getMessage());
-            e.printStackTrace();
-            response.put("success", false);
-            response.put("error", "Erreur lors du calcul: " + e.getMessage());
-        }
-
-        System.out.println("=== CALCUL PRIX FIN ===");
-        ModelView mv = new ModelView("views/api/json.jsp");
-        mv.addObject("data", response);
-        return mv;
-    }
-
 }

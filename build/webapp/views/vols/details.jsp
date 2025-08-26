@@ -131,9 +131,10 @@
                                     <form method="post" action="deletePromotion" style="display:inline;"
                                         onsubmit="return confirm('Supprimer cette promotion ?');">
                                         <input type="hidden" name="id" value="<%= promo.getIdPromotion() %>">
-                                        <input type="hidden" name="volId" value="<%= vol.getIdVol() %>">
+                                        <input type="hidden" name="idVol" value="<%= promo.getIdVol() %>">
                                         <button type="submit" class="btn btn-small btn-danger">🗑️ Delete</button>
                                     </form>
+
                                 <% } %>
                             </div>
                 <%

@@ -224,7 +224,7 @@ public class PromotionService {
         QueryResult queryResult = null;
         try {
             String query = "SELECT p.id_promotion, p.nom, p.date_debut, p.date_fin, " +
-                    "p.reduction_pourcentage_, p.id_vol, p.id_categorie_age, " +
+                    "p.reduction_pourcentage_, p.id_vol, c.id_categorie_age, " +
                     "c.nom as categorie_nom, c.age_min, c.age_max, c.multiplicateur_prix " +
                     "FROM promotion p " +
                     "LEFT JOIN categorie_age c ON p.id_categorie_age = c.id_categorie_age " +
@@ -265,4 +265,5 @@ public class PromotionService {
 
         return null;
     }
+
 }

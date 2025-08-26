@@ -152,6 +152,8 @@ public class ReservationService {
             return null;
 
         QueryResult queryResult = null;
+        Reservation reservation = null;
+
         try {
             String query = "SELECT r.id_reservation, r.date_reservation_, r.prix_total_, " +
                     "r.id_vol, r.id_user, r.siege_business, r.siege_eco, " +
@@ -169,19 +171,48 @@ public class ReservationService {
             queryResult = DatabaseUtil.executeQuery(query, idReservation);
 
             if (queryResult.resultSet.next()) {
-                return mapResultSetToReservation(queryResult.resultSet);
+                reservation = new Reservation();
+                reservation.setIdReservation(queryResult.resultSet.getLong("id_reservation"));
+                reservation
+                        .setDateReservation(queryResult.resultSet.getTimestamp("date_reservation_").toLocalDateTime());
+                reservation.setPrixTotal(queryResult.resultSet.getBigDecimal("prix_total_"));
+                reservation.setIdVol(queryResult.resultSet.getLong("id_vol"));
+                reservation.setIdUser(queryResult.resultSet.getLong("id_user"));
+                reservation.setSiegeBusiness(queryResult.resultSet.getInt("siege_business"));
+                reservation.setSiegeEco(queryResult.resultSet.getInt("siege_eco"));
+                reservation.setNumeroVol(queryResult.resultSet.getString("numero_vol_"));
+
+                Timestamp dateVolTs = queryResult.resultSet.getTimestamp("date_vol_");
+                if (dateVolTs != null) {
+                    reservation.setDateVol(dateVolTs.toLocalDateTime());
+                }
+
+                reservation.setVilleDestination(queryResult.resultSet.getString("ville_destination"));
+                reservation.setUsernameUser(queryResult.resultSet.getString("username_user"));
+                reservation.setPseudoAvion(queryResult.resultSet.getString("avion_pseudo"));
+
+                // ⚡ Préremplissage des sièges
+                Map<Long, Integer> siegeBusinessParCategorie = new HashMap<>();
+                Map<Long, Integer> siegeEcoParCategorie = new HashMap<>();
+
+                // Ici, comme il n’y a pas de table détail, on met les valeurs principales pour
+                // la catégorie “default”
+                siegeBusinessParCategorie.put(0L, queryResult.resultSet.getInt("siege_business"));
+                siegeEcoParCategorie.put(0L, queryResult.resultSet.getInt("siege_eco"));
+
+                reservation.setSiegeBusinessParCategorie(siegeBusinessParCategorie);
+                reservation.setSiegeEcoParCategorie(siegeEcoParCategorie);
             }
 
         } catch (SQLException e) {
             System.err.println("❌ Erreur lors de la recherche de la réservation par ID:");
             e.printStackTrace();
         } finally {
-            if (queryResult != null) {
+            if (queryResult != null)
                 queryResult.close();
-            }
         }
 
-        return null;
+        return reservation;
     }
 
     /**
@@ -663,6 +694,9 @@ public class ReservationService {
     private BigDecimal getPrixPourCategorieEtType(Long idVol, Long idCategorie, int idTypeSiege) {
         String query1 = "SELECT prix_final FROM prix_age_vol WHERE id_vol = ? AND id_categorie_age = ? AND id_type_siege = ?";
 
+        System.out.println("🔍 Vérif prix_age_vol avec paramètres: "
+                + "idVol=" + idVol + ", idCategorie=" + idCategorie + ", idTypeSiege=" + idTypeSiege);
+
         try (Connection conn = DatabaseUtil.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query1)) {
 
@@ -670,22 +704,27 @@ public class ReservationService {
             stmt.setLong(2, idCategorie);
             stmt.setInt(3, idTypeSiege);
 
+            System.out.println("📄 SQL exécutée: " + query1);
+
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 BigDecimal prix = rs.getBigDecimal("prix_final");
                 System.out.println("✅ Prix trouvé dans prix_age_vol: " + prix);
                 return prix != null ? prix : BigDecimal.ZERO;
+            } else {
+                System.out.println("❌ Aucun résultat dans prix_age_vol !");
             }
         } catch (SQLException e) {
-            System.out.println("⚠️ Table prix_age_vol non trouvée, calcul manuel...");
+            System.out.println("⚠️ Erreur SQL prix_age_vol: " + e.getMessage());
+            e.printStackTrace();
         }
 
         // Si prix_age_vol n'existe pas, calculer manuellement
         try {
             // Récupérer le prix de base du vol/siège
             String queryPrixBase = """
-                    SELECT psv.prix
-                    FROM prix_siege_vol psv
+                    SELECT psv.prix_
+                    FROM prix_siege_vol_ psv
                     WHERE psv.id_vol = ? AND psv.id_type_siege = ?
                     """;
 
@@ -698,7 +737,7 @@ public class ReservationService {
                 ResultSet rs = stmt.executeQuery();
 
                 if (rs.next()) {
-                    prixBase = rs.getBigDecimal("prix");
+                    prixBase = rs.getBigDecimal("prix_");
                 }
             }
 
@@ -717,7 +756,8 @@ public class ReservationService {
                 }
             }
 
-            BigDecimal prixFinal = prixBase.multiply(multiplicateur);
+            // BigDecimal prixFinal = prixBase.multiply(multiplicateur);
+            BigDecimal prixFinal = prixBase.multiply(BigDecimal.ONE);
             System.out.println("💰 Calcul manuel: " + prixBase + " x " + multiplicateur + " = " + prixFinal);
             return prixFinal;
 

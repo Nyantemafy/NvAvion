@@ -98,7 +98,7 @@
                     <span class="btn-icon">🎯</span>
                     <span class="btn-text">Créer la Promotion</span>
                 </button>
-                <a href="detailsVol?id=<%= volId %>" class="btn btn-secondary">Annuler</a>
+                <a href="volDetails?id=<%= volId %>" class="btn btn-secondary">Annuler</a>
             </div>
         </form>
     </div>
