@@ -1,23 +1,316 @@
 <!DOCTYPE html>
-<html layout:decorate="~{layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catégories d'Âge - Configuration Prix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Variables de couleurs thème aviation */
+        :root {
+            --primary-color: #1a4f8b;
+            --secondary-color: #2c6aa0;
+            --accent-color: #ff9d00;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-muted: #6c757d;
+        }
+
+        body {
+            background-color: #f5f7f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* En-tête amélioré */
+        .breadcrumb {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+        }
+
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 i {
+            color: var(--accent-color);
+            margin-right: 0.5rem;
+        }
+
+        /* Cartes améliorées */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 1rem 1.5rem;
+            border: none;
+        }
+
+        .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .card-header h5 i {
+            margin-right: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Formulaires améliorés */
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(255, 157, 0, 0.25);
+        }
+
+        .input-group-text {
+            background-color: var(--light-bg);
+            border: 2px solid var(--border-color);
+            border-left: none;
+            color: var(--text-muted);
+        }
+
+        /* Boutons améliorés */
+        .btn {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--info-color), #138496);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #218838);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Tableau amélioré */
+        .table-responsive {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .table {
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table-dark {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .table th {
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: var(--border-color);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(26, 79, 139, 0.05);
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        /* Badges améliorés */
+        .badge {
+            padding: 0.5rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .bg-success {
+            background: linear-gradient(135deg, var(--success-color), #218838) !important;
+        }
+
+        .bg-warning {
+            background: linear-gradient(135deg, var(--warning-color), #e0a800) !important;
+            color: #000 !important;
+        }
+
+        .bg-info {
+            background: linear-gradient(135deg, var(--info-color), #138496) !important;
+        }
+
+        /* États vides */
+        .text-center.py-4 {
+            padding: 3rem !important;
+        }
+
+        .text-center.py-4 i {
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .table th, .table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Animation pour les calculs de prix */
+        @keyframes priceUpdate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .price-update {
+            animation: priceUpdate 0.3s ease;
+        }
+
+        /* Styles pour les modals */
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 12px 12px 0 0;
+            border: none;
+        }
+
+        .btn-close {
+            filter: invert(1);
+        }
+
+        /* Messages d'erreur */
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
 </head>
 <body>
-    <div layout:fragment="content">
+    <div class="container-fluid py-4">
         <div class="row mb-4">
             <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/pdf-service/prix-age">Configuration des prix</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Catégories d'âge</li>
+                    </ol>
+                </nav>
                 <h2><i class="fas fa-users"></i> Gestion des Catégories d'Âge</h2>
+                <p class="text-muted">Configurez les différentes catégories d'âge et leurs multiplicateurs de prix</p>
             </div>
-            <div class="col-auto">
+            <div class="col-auto align-self-center">
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategorieModal">
                     <i class="fas fa-plus"></i> Nouvelle Catégorie
                 </button>
             </div>
         </div>
 
+        <!-- Messages d'erreur -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${error}">Erreur lors du chargement des catégories</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <!-- Liste des catégories -->
         <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list"></i> Liste des Catégories</h5>
+            </div>
             <div class="card-body">
                 <div th:if="${#lists.isEmpty(categories)}" class="text-center py-5">
                     <i class="fas fa-users fa-4x text-muted mb-3"></i>
@@ -25,7 +318,7 @@
                     <p class="text-muted">Créez votre première catégorie pour commencer</p>
                 </div>
                 
-                <div th:if="${not #lists.isEmpty(categories)}">
+                <div th:unless="${#lists.isEmpty(categories)}">
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead class="table-dark">
@@ -35,13 +328,14 @@
                                     <th>Âge Max</th>
                                     <th>Multiplicateur</th>
                                     <th>Description</th>
+                                    <th>Statut</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:each="categorie : ${categories}">
                                     <td>
-                                        <strong th:text="${categorie.nom}">Enfant</strong>
+                                        <strong th:text="${categorie.nom}">Nom</strong>
                                     </td>
                                     <td th:text="${categorie.ageMin}">0</td>
                                     <td>
@@ -55,9 +349,16 @@
                                     </td>
                                     <td th:text="${categorie.description}">Description</td>
                                     <td>
+                                        <span th:if="${categorie.isActive}" class="badge bg-success">Active</span>
+                                        <span th:unless="${categorie.isActive}" class="badge bg-secondary">Inactive</span>
+                                    </td>
+                                    <td>
                                         <button class="btn btn-sm btn-outline-primary" 
                                                 th:onclick="'editCategorie(' + ${categorie.id} + ')'">
                                             <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -80,31 +381,36 @@
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label for="nom" class="form-label">Nom *</label>
-                                <input type="text" class="form-control" th:field="*{nom}" required>
+                                <input type="text" class="form-control" id="nom" th:field="*{nom}" required>
+                                <div th:if="${#fields.hasErrors('nom')}" class="error-message" th:errors="*{nom}"></div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="ageMin" class="form-label">Âge Minimum *</label>
-                                        <input type="number" class="form-control" th:field="*{ageMin}" required>
+                                        <input type="number" class="form-control" id="ageMin" th:field="*{ageMin}" required min="0">
+                                        <div th:if="${#fields.hasErrors('ageMin')}" class="error-message" th:errors="*{ageMin}"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="ageMax" class="form-label">Âge Maximum</label>
-                                        <input type="number" class="form-control" th:field="*{ageMax}">
+                                        <input type="number" class="form-control" id="ageMax" th:field="*{ageMax}" min="0">
                                         <small class="form-text text-muted">Laissez vide pour aucune limite</small>
+                                        <div th:if="${#fields.hasErrors('ageMax')}" class="error-message" th:errors="*{ageMax}"></div>
                                     </div>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label for="multiplicateurPrix" class="form-label">Multiplicateur Prix *</label>
-                                <input type="number" step="0.01" class="form-control" th:field="*{multiplicateurPrix}" required>
+                                <input type="number" step="0.01" class="form-control" id="multiplicateurPrix" th:field="*{multiplicateurPrix}" required min="0.1" max="10.0">
                                 <small class="form-text text-muted">Ex: 0.5 pour 50% du prix, 1.2 pour 120% du prix</small>
+                                <div th:if="${#fields.hasErrors('multiplicateurPrix')}" class="error-message" th:errors="*{multiplicateurPrix}"></div>
                             </div>
                             <div class="mb-3">
                                 <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control" th:field="*{description}" rows="2"></textarea>
+                                <textarea class="form-control" id="description" th:field="*{description}" rows="2"></textarea>
+                                <div th:if="${#fields.hasErrors('description')}" class="error-message" th:errors="*{description}"></div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -116,5 +422,26 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fonction pour éditer une catégorie
+        function editCategorie(id) {
+            console.log('Édition de la catégorie avec ID:', id);
+            // Ici, vous pouvez implémenter la logique pour éditer une catégorie
+            // Par exemple, ouvrir un modal avec les données de la catégorie
+            alert('Fonction d\'édition pour la catégorie ID: ' + id);
+        }
+
+        // Gestion des messages d'erreur de validation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Afficher le modal s'il y a des erreurs de validation
+            const hasErrors = document.querySelector('.error-message');
+            if (hasErrors) {
+                const modal = new bootstrap.Modal(document.getElementById('createCategorieModal'));
+                modal.show();
+            }
+        });
+    </script>
 </body>
 </html>
