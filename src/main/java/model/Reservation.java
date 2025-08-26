@@ -2,6 +2,8 @@ package model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Reservation {
     private Long idReservation;
@@ -18,6 +20,8 @@ public class Reservation {
     private String villeDestination;
     private String usernameUser;
     private String pseudoAvion;
+    private Map<Long, Integer> siegeBusinessParCategorie;
+    private Map<Long, Integer> siegeEcoParCategorie;
 
     // Constructeurs
     public Reservation() {
@@ -129,6 +133,65 @@ public class Reservation {
 
     public void setPseudoAvion(String pseudoAvion) {
         this.pseudoAvion = pseudoAvion;
+    }
+
+    public Map<Long, Integer> getSiegeBusinessParCategorie() {
+        if (siegeBusinessParCategorie == null) {
+            siegeBusinessParCategorie = new HashMap<>();
+        }
+        return siegeBusinessParCategorie;
+    }
+
+    public void setSiegeBusinessParCategorie(Map<Long, Integer> siegeBusinessParCategorie) {
+        this.siegeBusinessParCategorie = siegeBusinessParCategorie;
+    }
+
+    public Map<Long, Integer> getSiegeEcoParCategorie() {
+        if (siegeEcoParCategorie == null) {
+            siegeEcoParCategorie = new HashMap<>();
+        }
+        return siegeEcoParCategorie;
+    }
+
+    public void setSiegeEcoParCategorie(Map<Long, Integer> siegeEcoParCategorie) {
+        this.siegeEcoParCategorie = siegeEcoParCategorie;
+    }
+
+    // Méthodes utilitaires pour faciliter l'ajout de sièges
+    public void addSiegeBusiness(Long categorieId, Integer quantite) {
+        getSiegeBusinessParCategorie().put(categorieId, quantite);
+    }
+
+    public void addSiegeEco(Long categorieId, Integer quantite) {
+        getSiegeEcoParCategorie().put(categorieId, quantite);
+    }
+
+    // Méthode pour convertir les données en format Map pour
+    // calculateReservationPrice
+    public Map<Long, Map<String, Integer>> getQuantitiesForCalculation() {
+        Map<Long, Map<String, Integer>> quantities = new HashMap<>();
+
+        // Pour chaque catégorie dans siegeBusinessParCategorie
+        for (Map.Entry<Long, Integer> entry : getSiegeBusinessParCategorie().entrySet()) {
+            Long categorieId = entry.getKey();
+            Integer quantite = entry.getValue();
+
+            Map<String, Integer> seats = quantities.getOrDefault(categorieId, new HashMap<>());
+            seats.put("business", quantite);
+            quantities.put(categorieId, seats);
+        }
+
+        // Pour chaque catégorie dans siegeEcoParCategorie
+        for (Map.Entry<Long, Integer> entry : getSiegeEcoParCategorie().entrySet()) {
+            Long categorieId = entry.getKey();
+            Integer quantite = entry.getValue();
+
+            Map<String, Integer> seats = quantities.getOrDefault(categorieId, new HashMap<>());
+            seats.put("eco", quantite);
+            quantities.put(categorieId, seats);
+        }
+
+        return quantities;
     }
 
     // Méthodes utilitaires

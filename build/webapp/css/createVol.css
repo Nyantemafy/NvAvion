@@ -123,6 +123,42 @@
     font-size: 1.1em;
 }
 
+.age-categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.age-category {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+.age-category h3 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+.category-description {
+    font-size: 0.9em;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+}
+.price-display {
+    font-weight: bold;
+    color: #27ae60;
+    margin-top: 10px;
+}
+.total-price {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #e74c3c;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .form-grid {

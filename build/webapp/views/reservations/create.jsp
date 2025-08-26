@@ -3,6 +3,7 @@
 <%@ page import="model.Vol" %>
 <%@ page import="java.util.List" %>
 <%@ page import="model.Reservation" %>
+<%@ page import="model.CategorieAge" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -16,6 +17,7 @@
             User user = (User) request.getAttribute("user");
             List<Vol> vols = (List<Vol>) request.getAttribute("vols");
             List<User> users = (List<User>) request.getAttribute("users");
+            List<CategorieAge> categoriesAge = (List<CategorieAge>) request.getAttribute("categoriesAge");
             Reservation reservation = (Reservation) request.getAttribute("reservation");
             String error = (String) request.getAttribute("error");
         %>
@@ -33,7 +35,7 @@
             <div class="error-message">❌ <%= error %></div>
         <% } %>
 
-        <form method="post" action="createReservation" class="flight-form">
+        <form method="post" action="createReservation" class="flight-form" id="reservationForm">
             <div class="form-section">
                 <h2>Informations de la réservation</h2>
                 <div class="form-grid">
@@ -53,7 +55,7 @@
 
                     <div class="form-group">
                         <label for="idVol">Vol *</label>
-                        <select id="idVol" name="idVol" required>
+                        <select id="idVol" name="idVol" required onchange="updatePriceCalculation()">
                             <option value="">-- Sélectionnez --</option>
                             <% for (Vol v : vols) { %>
                                 <option value="<%= v.getIdVol() %>"
@@ -76,33 +78,46 @@
             </div>
 
             <div class="form-section">
-                <h2>Sièges</h2>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="siegeBusiness">Sièges Classe Affaire</label>
-                        <input type="number" id="siegeBusiness" name="siegeBusiness" min="0"
-                            value="<%= reservation != null && reservation.getSiegeBusiness() != null ? reservation.getSiegeBusiness() : "0" %>">
-                    </div>
+                <h2>Sièges par Catégorie d'Âge</h2>
+                <div class="age-categories">
+                    <% if (categoriesAge != null) { %>
+                        <% for (CategorieAge categorie : categoriesAge) { %>
+                            <div class="age-category">
+                                <h3><%= categorie.getNom() %></h3>
+                                <div class="category-description">
+                                    <%= categorie.getDescription() != null ? categorie.getDescription() :
+                                        "Âge: " + categorie.getAgeMin() +
+                                        (categorie.getAgeMax() != null ? " à " + categorie.getAgeMax() : " et plus") %>
+                                </div>
+                                <div class="form-group">
+                                    <label for="siegeBusiness_<%= categorie.getIdCategorieAge() %>">Sièges Business</label>
+                                    <input type="number" id="siegeBusiness_<%= categorie.getIdCategorieAge() %>" 
+                                        name="siegeBusiness_<%= categorie.getIdCategorieAge() %>" 
+                                        min="0" value="0" onchange="updatePriceCalculation()">
+                                </div>
+                                <div class="form-group">
+                                    <label for="siegeEco_<%= categorie.getIdCategorieAge() %>">Sièges Économique</label>
+                                    <input type="number" id="siegeEco_<%= categorie.getIdCategorieAge() %>" 
+                                        name="siegeEco_<%= categorie.getIdCategorieAge() %>" 
+                                        min="0" value="0" onchange="updatePriceCalculation()">
+                                </div>
+                                <div class="price-display" id="price_<%= categorie.getIdCategorieAge() %>">
+                                    Prix: 0,00 €
+                                </div>
+                            </div>
+                        <% } %>
+                    <% } else { %>
+                        <p style="color:red;">⚠️ Aucune catégorie d'âge trouvée.</p>
+                    <% } %>
 
-                    <div class="form-group">
-                        <label for="siegeEco">Sièges Classe Éco</label>
-                        <input type="number" id="siegeEco" name="siegeEco" min="0"
-                            value="<%= reservation != null && reservation.getSiegeEco() != null ? reservation.getSiegeEco() : "0" %>">
-                    </div>
+                </div>
+                
+                <div class="total-price" id="totalPriceDisplay">
+                    Prix Total: 0,00 €
                 </div>
             </div>
 
-            <div class="form-section">
-                <h2>Prix</h2>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="prixTotal">Prix total (€) *</label>
-                        <input type="number" id="prixTotal" name="prixTotal" step="0.01"
-                            value="<%= reservation != null && reservation.getPrixTotal() != null ? reservation.getPrixTotal() : "" %>"
-                            required>
-                    </div>
-                </div>
-            </div>
+            <input type="hidden" id="prixTotal" name="prixTotal" value="0">
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary btn-submit-flight">
@@ -118,6 +133,69 @@
         // Date par défaut = maintenant
         const now = new Date();
         document.getElementById('dateReservation').value = now.toISOString().slice(0,16);
+        
+        // Fonction pour mettre à jour le calcul du prix
+        function updatePriceCalculation() {
+            const idVol = document.getElementById('idVol').value;
+            
+            if (!idVol) {
+                return;
+            }
+            
+            // Récupérer les quantités par catégorie et classe
+            const quantities = {};
+            <% for (CategorieAge categorie : categoriesAge) { %>
+                quantities[<%= categorie.getIdCategorieAge() %>] = {
+                    business: parseInt(document.getElementById('siegeBusiness_<%= categorie.getIdCategorieAge() %>').value) || 0,
+                    eco: parseInt(document.getElementById('siegeEco_<%= categorie.getIdCategorieAge() %>').value) || 0
+                };
+            <% } %>
+            
+            // Appel AJAX pour calculer le prix
+            fetch('calculatePrice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `idVol=${idVol}&quantities=${JSON.stringify(quantities)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mettre à jour les prix par catégorie
+                    <% for (CategorieAge categorie : categoriesAge) { %>
+                        const priceElement<%= categorie.getIdCategorieAge() %> = document.getElementById('price_<%= categorie.getIdCategorieAge() %>');
+                        // Trouver le prix pour cette catégorie dans les détails
+                        let categoryPrice = 0;
+                        if (data.details) {
+                            for (const detail of data.details) {
+                                if (detail.categorieAgeId === <%= categorie.getIdCategorieAge() %>) {
+                                    categoryPrice += detail.prixTotal;
+                                }
+                            }
+                        }
+                        priceElement<%= categorie.getIdCategorieAge() %>.textContent = `Prix: ${categoryPrice.toFixed(2)} €`;
+                    <% } %>
+                    
+                    // Mettre à jour le prix total
+                    document.getElementById('totalPriceDisplay').textContent = `Prix Total: ${data.prixTotal.toFixed(2)} €`;
+                    document.getElementById('prixTotal').value = data.prixTotal;
+                } else {
+                    alert('Erreur lors du calcul du prix: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur lors du calcul du prix');
+            });
+        }
+
+        // Initialiser le calcul du prix si un vol est déjà sélectionné
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('idVol').value) {
+                updatePriceCalculation();
+            }
+        });
     </script>
 </body>
 </html>
