@@ -9,6 +9,7 @@ public class Promotion {
     private LocalDate dateFin;
     private Integer reductionPourcentage;
     private Long idVol;
+    private CategorieAge categorieAge;
 
     // Constructeurs
     public Promotion() {
@@ -69,5 +70,13 @@ public class Promotion {
 
     public void setIdVol(Long idVol) {
         this.idVol = idVol;
+    }
+
+    public CategorieAge getCategorieAge() {
+        return categorieAge;
+    }
+
+    public void setCategorieAge(CategorieAge categorieAge) {
+        this.categorieAge = categorieAge;
     }
 }

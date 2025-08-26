@@ -1,7 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="java.util.List" %>
 <%@ page import="model.User" %>
 <%@ page import="model.Vol" %>
+<%@ page import="model.Promotion" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -16,6 +18,7 @@
             String errorMessage = (String) session.getAttribute("errorMessage");
             session.removeAttribute("errorMessage");
         %>
+        
 
         <div class="header-actions">
             <div>
@@ -108,6 +111,48 @@
             </div>
         </div>
 
+        <div class="detail-item">
+            <span class="detail-label">Promotions :</span>
+            <span class="detail-value">
+                <%
+                    List<Promotion> promotions = (List<Promotion>) request.getAttribute("promotions");
+                    if (promotions != null && !promotions.isEmpty()) {
+                        for (Promotion promo : promotions) {
+                %>
+                            <div class="promotion-item">
+                                <span class="promotion-badge">
+                                    <%= promo.getNom() %> 
+                                    (<%= promo.getReductionPourcentage() %>%)
+                                </span>
+                                <% if ("ADMIN".equals(user.getRole())) { %>
+                                    <!-- Boutons Update / Delete -->
+                                    <a href="editPromotionForm?id=<%= promo.getIdPromotion() %>&volId=<%= vol.getIdVol() %>" 
+                                    class="btn btn-small btn-primary">✏️ Update</a>
+                                    <form method="post" action="deletePromotion" style="display:inline;"
+                                        onsubmit="return confirm('Supprimer cette promotion ?');">
+                                        <input type="hidden" name="id" value="<%= promo.getIdPromotion() %>">
+                                        <input type="hidden" name="volId" value="<%= vol.getIdVol() %>">
+                                        <button type="submit" class="btn btn-small btn-danger">🗑️ Delete</button>
+                                    </form>
+                                <% } %>
+                            </div>
+                <%
+                        }
+                    } else {
+                %>
+                        <span>Aucune promotion disponible</span>
+                <%
+                    }
+                %>
+            </span>
+        </div>
+        
+        <% if ("ADMIN".equals(user.getRole())) { %>
+            <div class="promotion-actions">
+                <a href="createPromotionForm?volId=<%= vol.getIdVol() %>" class="btn btn-success">➕ Nouvelle Promotion</a>
+            </div>
+        <% } %>
+        
         <div class="vol-actions">
             <% if ("ADMIN".equals(user.getRole())) { %>
                 <a href="editVolForm?id=<%= vol.getIdVol() %>" class="btn btn-primary">✏️ Modifier ce vol</a>

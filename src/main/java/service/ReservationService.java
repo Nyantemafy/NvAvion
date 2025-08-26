@@ -198,7 +198,7 @@ public class ReservationService {
             Map<Long, Map<String, Integer>> quantities = reservation.getQuantitiesForCalculation();
             BigDecimal prixCalcule = calculateReservationPrice(reservation.getIdVol(), quantities);
 
-            // Utiliser le prix calculé plutôt que celui fourni
+            // Utiliser le prix calculé
             reservation.setPrixTotal(prixCalcule);
 
             // Préparer la requête SQL
@@ -223,12 +223,15 @@ public class ReservationService {
                     totalSiegeEco
             };
 
+            System.out.println("💾 Insertion réservation - Prix calculé: " + prixCalcule);
+            System.out.println("💾 Paramètres: " + java.util.Arrays.toString(params));
+
             long generatedId = DatabaseUtil.executeInsertWithGeneratedKey(query, params);
 
             if (generatedId > 0) {
                 reservation.setIdReservation(generatedId);
 
-                // Insérer les détails par catégorie d'âge dans une nouvelle table
+                // Insérer les détails par catégorie d'âge
                 insertReservationDetails(generatedId, reservation.getSiegeBusinessParCategorie(),
                         reservation.getSiegeEcoParCategorie());
 
@@ -611,10 +614,10 @@ public class ReservationService {
      */
     public BigDecimal calculateReservationPrice(Long idVol, Map<Long, Map<String, Integer>> quantities) {
         BigDecimal prixTotal = BigDecimal.ZERO;
-        Map<Long, BigDecimal> categoryPrices = new HashMap<>();
 
         try {
             System.out.println("📊 Calcul du prix pour vol " + idVol);
+            System.out.println("📊 Quantités reçues: " + quantities);
 
             // Pour chaque catégorie d'âge
             for (Map.Entry<Long, Map<String, Integer>> entry : quantities.entrySet()) {
@@ -625,21 +628,24 @@ public class ReservationService {
                 int siegeBusiness = seats.getOrDefault("business", 0);
                 int siegeEco = seats.getOrDefault("eco", 0);
 
+                System.out.println("📊 Catégorie " + idCategorie + ": Business=" + siegeBusiness + ", Eco=" + siegeEco);
+
                 // Calculer le prix pour les sièges Business
                 if (siegeBusiness > 0) {
-                    BigDecimal prixBusiness = getPrixPourCategorieEtType(idVol, idCategorie, 1);
+                    BigDecimal prixBusiness = getPrixPourCategorieEtType(idVol, idCategorie, 1); // 1 = Business
                     BigDecimal totalBusiness = prixBusiness.multiply(BigDecimal.valueOf(siegeBusiness));
                     categoryTotal = categoryTotal.add(totalBusiness);
+                    System.out.println("💰 Business: " + siegeBusiness + " x " + prixBusiness + " = " + totalBusiness);
                 }
 
                 // Calculer le prix pour les sièges Économique
                 if (siegeEco > 0) {
-                    BigDecimal prixEco = getPrixPourCategorieEtType(idVol, idCategorie, 2);
+                    BigDecimal prixEco = getPrixPourCategorieEtType(idVol, idCategorie, 2); // 2 = Économique
                     BigDecimal totalEco = prixEco.multiply(BigDecimal.valueOf(siegeEco));
                     categoryTotal = categoryTotal.add(totalEco);
+                    System.out.println("💰 Eco: " + siegeEco + " x " + prixEco + " = " + totalEco);
                 }
 
-                categoryPrices.put(idCategorie, categoryTotal);
                 prixTotal = prixTotal.add(categoryTotal);
             }
 
@@ -648,16 +654,17 @@ public class ReservationService {
         } catch (Exception e) {
             System.err.println("❌ Erreur lors du calcul du prix:");
             e.printStackTrace();
+            return BigDecimal.ZERO;
         }
 
         return prixTotal;
     }
 
     private BigDecimal getPrixPourCategorieEtType(Long idVol, Long idCategorie, int idTypeSiege) {
-        String query = "SELECT prix_final FROM prix_age_vol WHERE id_vol = ? AND id_categorie_age = ? AND id_type_siege = ?";
+        String query1 = "SELECT prix_final FROM prix_age_vol WHERE id_vol = ? AND id_categorie_age = ? AND id_type_siege = ?";
 
         try (Connection conn = DatabaseUtil.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query1)) {
 
             stmt.setLong(1, idVol);
             stmt.setLong(2, idCategorie);
@@ -665,10 +672,57 @@ public class ReservationService {
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                return rs.getBigDecimal("prix_final");
+                BigDecimal prix = rs.getBigDecimal("prix_final");
+                System.out.println("✅ Prix trouvé dans prix_age_vol: " + prix);
+                return prix != null ? prix : BigDecimal.ZERO;
             }
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la récupération du prix:");
+            System.out.println("⚠️ Table prix_age_vol non trouvée, calcul manuel...");
+        }
+
+        // Si prix_age_vol n'existe pas, calculer manuellement
+        try {
+            // Récupérer le prix de base du vol/siège
+            String queryPrixBase = """
+                    SELECT psv.prix
+                    FROM prix_siege_vol psv
+                    WHERE psv.id_vol = ? AND psv.id_type_siege = ?
+                    """;
+
+            BigDecimal prixBase = BigDecimal.ZERO;
+            try (Connection conn = DatabaseUtil.getConnection();
+                    PreparedStatement stmt = conn.prepareStatement(queryPrixBase)) {
+
+                stmt.setLong(1, idVol);
+                stmt.setInt(2, idTypeSiege);
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    prixBase = rs.getBigDecimal("prix");
+                }
+            }
+
+            // Récupérer le multiplicateur de la catégorie d'âge
+            String queryMultiplicateur = "SELECT multiplicateur_prix FROM categorie_age WHERE id_categorie_age = ?";
+            BigDecimal multiplicateur = BigDecimal.ONE;
+
+            try (Connection conn = DatabaseUtil.getConnection();
+                    PreparedStatement stmt = conn.prepareStatement(queryMultiplicateur)) {
+
+                stmt.setLong(1, idCategorie);
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    multiplicateur = rs.getBigDecimal("multiplicateur_prix");
+                }
+            }
+
+            BigDecimal prixFinal = prixBase.multiply(multiplicateur);
+            System.out.println("💰 Calcul manuel: " + prixBase + " x " + multiplicateur + " = " + prixFinal);
+            return prixFinal;
+
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors du calcul manuel du prix:");
             e.printStackTrace();
         }
 

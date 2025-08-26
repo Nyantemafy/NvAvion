@@ -2,6 +2,7 @@ package controller;
 
 import mg.itu.prom16.*;
 import model.*;
+import service.PromotionService;
 import service.VolService;
 import java.util.List;
 import java.math.BigDecimal;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 @AnnotedController
 public class VolController {
     private VolService volService = new VolService();
+    private PromotionService promotionService = new PromotionService();
 
     /**
      * Afficher la liste des vols avec filtres (dashboard principal)
@@ -428,6 +430,7 @@ public class VolController {
         try {
             Long id = Long.parseLong(idStr);
             Vol vol = volService.findVolById(id);
+            List<Promotion> promotions = promotionService.findPromotionsByVolId(id);
 
             if (vol == null) {
                 ModelView mv = new ModelView("vols");
@@ -438,6 +441,7 @@ public class VolController {
             ModelView mv = new ModelView("views/vols/details.jsp");
             mv.addObject("user", user);
             mv.addObject("vol", vol);
+            mv.addObject("promotions", promotions);
             return mv;
 
         } catch (NumberFormatException e) {

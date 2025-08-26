@@ -3,6 +3,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="model.User" %>
+<%@page import="model.Promotion"%>
 <!DOCTYPE html>
 <html>
 <head>

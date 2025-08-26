@@ -18,6 +18,8 @@ import java.net.http.HttpResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @AnnotedController
 public class ReservationController {
     private ReservationService reservationService = new ReservationService();
@@ -175,8 +177,7 @@ public class ReservationController {
             @Param(name = "dateReservation") String dateReservationStr,
             @Param(name = "idVol") String idVolStr,
             @Param(name = "idUser") String idUserStr,
-            @Param(name = "siegeBusiness") String siegeBusinessStr,
-            @Param(name = "siegeEco") String siegeEcoStr,
+            HttpServletRequest request,
             CurrentSession session) {
 
         User user = (User) session.get("user");
@@ -187,45 +188,83 @@ public class ReservationController {
         }
 
         try {
-            // Conversion des paramètres
+            // Conversion des paramètres de base
             LocalDateTime dateReservation = dateReservationStr != null && !dateReservationStr.isEmpty()
                     ? LocalDateTime.parse(dateReservationStr.replace(" ", "T"))
                     : LocalDateTime.now();
 
             Long idVol = parseLongSafe(idVolStr);
             Long idUser = parseLongSafe(idUserStr);
-            Integer siegeBusiness = parseIntegerSafe(siegeBusinessStr);
-            Integer siegeEco = parseIntegerSafe(siegeEcoStr);
 
-            // Validation
+            // Validation de base
             if (idVol == null || idUser == null) {
                 ModelView mv = new ModelView("views/reservations/create.jsp");
                 mv.addObject("error", "Veuillez sélectionner un vol et un utilisateur");
                 mv.addObject("user", user);
                 mv.addObject("vols", volService.findAllVols());
                 mv.addObject("users", userService.findAllUsers());
-                mv.addObject("users", categorieAgeService.findAllCategories());
+                mv.addObject("categoriesAge", categorieAgeService.findAllCategories());
                 return mv;
             }
 
-            if ((siegeBusiness == null || siegeBusiness == 0) && (siegeEco == null || siegeEco == 0)) {
+            // Récupérer les quantités par catégorie d'âge depuis les paramètres de la
+            // requête
+            Map<Long, Integer> siegeBusinessParCategorie = new HashMap<>();
+            Map<Long, Integer> siegeEcoParCategorie = new HashMap<>();
+
+            // Parcourir tous les paramètres pour trouver ceux des sièges
+            Map<String, String[]> parameterMap = request.getParameterMap();
+            for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+                String paramName = entry.getKey();
+                String paramValue = entry.getValue()[0];
+
+                if (paramName.startsWith("siegeBusiness_")) {
+                    Long categorieId = Long.parseLong(paramName.substring("siegeBusiness_".length()));
+                    Integer quantity = parseIntegerSafe(paramValue);
+                    if (quantity > 0) {
+                        siegeBusinessParCategorie.put(categorieId, quantity);
+                    }
+                } else if (paramName.startsWith("siegeEco_")) {
+                    Long categorieId = Long.parseLong(paramName.substring("siegeEco_".length()));
+                    Integer quantity = parseIntegerSafe(paramValue);
+                    if (quantity > 0) {
+                        siegeEcoParCategorie.put(categorieId, quantity);
+                    }
+                }
+            }
+
+            // Vérifier qu'au moins un siège est réservé
+            if (siegeBusinessParCategorie.isEmpty() && siegeEcoParCategorie.isEmpty()) {
                 ModelView mv = new ModelView("views/reservations/create.jsp");
                 mv.addObject("error", "Veuillez réserver au moins un siège");
                 mv.addObject("user", user);
                 mv.addObject("vols", volService.findAllVols());
                 mv.addObject("users", userService.findAllUsers());
-                mv.addObject("users", categorieAgeService.findAllCategories());
+                mv.addObject("categoriesAge", categorieAgeService.findAllCategories());
                 return mv;
             }
 
-            // Création de l'objet réservation (le prix sera calculé automatiquement dans le
-            // service)
+            // Création de l'objet réservation avec les nouvelles données
             Reservation reservation = new Reservation();
             reservation.setDateReservation(dateReservation);
             reservation.setIdVol(idVol);
             reservation.setIdUser(idUser);
-            reservation.setSiegeBusiness(siegeBusiness);
-            reservation.setSiegeEco(siegeEco);
+
+            // Définir les sièges par catégorie
+            reservation.setSiegeBusinessParCategorie(siegeBusinessParCategorie);
+            reservation.setSiegeEcoParCategorie(siegeEcoParCategorie);
+
+            // Calculer les totaux pour compatibilité (optionnel)
+            int totalBusiness = siegeBusinessParCategorie.values().stream().mapToInt(Integer::intValue).sum();
+            int totalEco = siegeEcoParCategorie.values().stream().mapToInt(Integer::intValue).sum();
+            reservation.setSiegeBusiness(totalBusiness);
+            reservation.setSiegeEco(totalEco);
+
+            System.out.println("🎫 Création réservation:");
+            System.out.println("   - Vol: " + idVol);
+            System.out.println("   - User: " + idUser);
+            System.out.println("   - Sièges Business par catégorie: " + siegeBusinessParCategorie);
+            System.out.println("   - Sièges Eco par catégorie: " + siegeEcoParCategorie);
 
             boolean success = reservationService.createReservation(reservation);
 
@@ -252,7 +291,7 @@ public class ReservationController {
                 mv.addObject("user", user);
                 mv.addObject("vols", volService.findAllVols());
                 mv.addObject("users", userService.findAllUsers());
-                mv.addObject("users", categorieAgeService.findAllCategories());
+                mv.addObject("categoriesAge", categorieAgeService.findAllCategories());
                 return mv;
             }
 
@@ -266,7 +305,7 @@ public class ReservationController {
             try {
                 mv.addObject("vols", volService.findAllVols());
                 mv.addObject("users", userService.findAllUsers());
-                mv.addObject("users", categorieAgeService.findAllCategories());
+                mv.addObject("categoriesAge", categorieAgeService.findAllCategories());
             } catch (Exception ex) {
                 // Ignore les erreurs secondaires
             }
@@ -809,44 +848,54 @@ public class ReservationController {
             @Param(name = "quantities") String quantitiesJson,
             CurrentSession session) {
 
-        User user = (User) session.get("user");
-        if (user == null) {
-            ModelView mv = new ModelView("views/api/json.jsp");
-            mv.addObject("error", "Non connecté");
-            return mv;
-        }
+        Map<String, Object> response = new HashMap<>();
 
         try {
-            Long idVol = parseLongSafe(idVolStr);
-            if (idVol == null) {
+            System.out.println("=== CALCUL PRIX DÉBUT ===");
+            System.out.println("ID Vol: " + idVolStr);
+            System.out.println("Quantités: " + quantitiesJson);
+
+            // Vérification des paramètres
+            if (idVolStr == null || idVolStr.isEmpty() || quantitiesJson == null || quantitiesJson.isEmpty()) {
+                response.put("success", false);
+                response.put("error", "Paramètres manquants");
+
                 ModelView mv = new ModelView("views/api/json.jsp");
-                mv.addObject("error", "Paramètres invalides");
+                mv.addObject("data", response);
                 return mv;
             }
 
-            // Convertir le JSON en Map
-            Map<Long, Map<String, Integer>> quantities = reservationService.parseQuantities(quantitiesJson);
+            Long idVol = parseLongSafe(idVolStr);
+            if (idVol == null) {
+                response.put("success", false);
+                response.put("error", "ID de vol invalide");
+            } else {
+                // Parser les quantités
+                Map<Long, Map<String, Integer>> quantities = reservationService.parseQuantities(quantitiesJson);
+                System.out.println("Quantités parsées: " + quantities);
 
-            // Calculer le prix avec la nouvelle signature
-            BigDecimal prixTotal = reservationService.calculateReservationPrice(idVol, quantities);
+                // Calculer le prix
+                BigDecimal prixTotal = reservationService.calculateReservationPrice(idVol, quantities);
+                List<PrixDetail> details = reservationService.getPrixDetailsForVol(idVol, quantities);
 
-            // Récupérer les détails de prix pour affichage
-            List<PrixDetail> details = reservationService.getPrixDetailsForVol(idVol, quantities);
+                System.out.println("Prix total calculé: " + prixTotal);
+                System.out.println("Détails: " + details);
 
-            ModelView mv = new ModelView("views/api/json.jsp");
-            mv.addObject("prixTotal", prixTotal);
-            mv.addObject("details", details);
-            mv.addObject("success", true);
-            return mv;
-
+                response.put("prixTotal", prixTotal);
+                response.put("details", details);
+                response.put("success", true);
+            }
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors du calcul de prix:");
+            System.err.println("Erreur lors du calcul du prix: " + e.getMessage());
             e.printStackTrace();
-
-            ModelView mv = new ModelView("views/api/json.jsp");
-            mv.addObject("error", "Erreur lors du calcul: " + e.getMessage());
-            return mv;
+            response.put("success", false);
+            response.put("error", "Erreur lors du calcul: " + e.getMessage());
         }
+
+        System.out.println("=== CALCUL PRIX FIN ===");
+        ModelView mv = new ModelView("views/api/json.jsp");
+        mv.addObject("data", response);
+        return mv;
     }
 
 }
