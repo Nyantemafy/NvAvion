@@ -122,12 +122,11 @@
                             <div class="promotion-item">
                                 <span class="promotion-badge">
                                     <%= promo.getNom() %> 
-                                    (<%= promo.getReductionPourcentage() %>%)
                                 </span>
                                 <% if ("ADMIN".equals(user.getRole())) { %>
                                     <!-- Boutons Update / Delete -->
-                                    <a href="editPromotionForm?id=<%= promo.getIdPromotion() %>&volId=<%= vol.getIdVol() %>" 
-                                    class="btn btn-small btn-primary">✏️ Update</a>
+                                    <!-- <a href="editPromotionForm?id=<%= promo.getIdPromotion() %>&volId=<%= vol.getIdVol() %>" 
+                                    class="btn btn-small btn-primary">✏️ Update</a> -->
                                     <form method="post" action="deletePromotion" style="display:inline;"
                                         onsubmit="return confirm('Supprimer cette promotion ?');">
                                         <input type="hidden" name="id" value="<%= promo.getIdPromotion() %>">

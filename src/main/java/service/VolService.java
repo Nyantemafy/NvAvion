@@ -1,14 +1,20 @@
 package service;
 
-import model.*;
-import util.DatabaseUtil;
-import util.DatabaseUtil.QueryResult;
-import java.sql.*;
-import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+
+import model.Avion;
+import model.Promotion;
+import model.TypeSiege;
+import model.Ville;
+import model.Vol;
+import model.VolFilter;
+import util.DatabaseUtil;
+import util.DatabaseUtil.QueryResult;
 
 public class VolService {
 
@@ -27,7 +33,7 @@ public class VolService {
             queryBuilder.append("SELECT DISTINCT v.id_vol, v.numero_vol_, v.date_vol_, v.id_ville, v.id_avion, ");
             queryBuilder.append("vi.nom as ville_destination, a.pseudo as avion_pseudo, ");
             queryBuilder.append("MIN(psv.prix_) as prix_min, MAX(psv.prix_) as prix_max, ");
-            queryBuilder.append("p.nom as promotion_nom, p.reduction_pourcentage_ ");
+            queryBuilder.append("p.nom as promotion_nom ");
             queryBuilder.append("FROM vol v ");
             queryBuilder.append("LEFT JOIN ville vi ON v.id_ville = vi.id_ville ");
             queryBuilder.append("LEFT JOIN avion a ON v.id_avion = a.id_avion ");
@@ -73,7 +79,7 @@ public class VolService {
 
             // Grouper et ordonner
             queryBuilder.append("GROUP BY v.id_vol, v.numero_vol_, v.date_vol_, v.id_ville, v.id_avion, ");
-            queryBuilder.append("vi.nom, a.pseudo, p.nom, p.reduction_pourcentage_ ");
+            queryBuilder.append("vi.nom, a.pseudo, p.nom ");
 
             // Filtre par prix (HAVING car c'est sur une fonction d'agrégation)
             if (filter.getPrixMin() != null) {
@@ -113,8 +119,6 @@ public class VolService {
                 vol.setPrixMax(prixMax);
 
                 vol.setPromotionNom(queryResult.resultSet.getString("promotion_nom"));
-                Integer reduction = queryResult.resultSet.getObject("reduction_pourcentage_", Integer.class);
-                vol.setPromotionReduction(reduction);
 
                 vols.add(vol);
             }

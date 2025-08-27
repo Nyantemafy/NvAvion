@@ -836,4 +836,29 @@ public class ReservationService {
         return details;
     }
 
+    public boolean payerReservation(Long idReservation) {
+        if (idReservation == null) {
+            System.out.println("❌ ID de réservation invalide");
+            return false;
+        }
+
+        try {
+            String query = "UPDATE reservation SET paye = true WHERE id_reservation = ?";
+            int rowsAffected = DatabaseUtil.executeUpdate(query, idReservation);
+
+            if (rowsAffected > 0) {
+                System.out.println("✅ Réservation marquée comme payée");
+                return true;
+            } else {
+                System.out.println("❌ Aucune réservation trouvée avec l'ID " + idReservation);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors du paiement de la réservation:");
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
 }

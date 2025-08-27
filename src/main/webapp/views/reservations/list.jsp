@@ -222,6 +222,18 @@
                                             🗑️ Supprimer
                                         </button>
                                     </form>
+                                    
+                                    <% if (!resa.getPaye()) { %>
+                                        <form method="post" action="payerReservation" style="display: inline;" 
+                                            onsubmit="return confirm('Confirmer le paiement de cette réservation ?');">
+                                            <input type="hidden" name="id" value="<%= resa.getIdReservation() %>">
+                                            <button type="submit" class="btn-small btn-pay" title="Payer">
+                                                💳 Payer
+                                            </button>
+                                        </form>
+                                    <% } else { %>
+                                        <span class="badge badge-success">✅ Payée</span>
+                                    <% } %>
                                 </div>
                             </td>
                         </tr>

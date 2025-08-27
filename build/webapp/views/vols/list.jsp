@@ -187,7 +187,6 @@
                                 <% if (vol.getPromotionNom() != null) { %>
                                     <span class="promotion-badge">
                                         <%= vol.getPromotionNom() %> 
-                                        (-<%= vol.getPromotionReduction() %>%)
                                     </span>
                                 <% } else { %>
                                     <em>Aucune</em>

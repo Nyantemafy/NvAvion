@@ -10,6 +10,8 @@ public class Promotion {
     private Integer reductionPourcentage;
     private Long idVol;
     private CategorieAge categorieAge;
+    private Integer siegeBusiness;
+    private Integer siegeEco;
 
     // Constructeurs
     public Promotion() {
@@ -21,6 +23,22 @@ public class Promotion {
         this.dateFin = dateFin;
         this.reductionPourcentage = reductionPourcentage;
         this.idVol = idVol;
+    }
+
+    public Integer getSiegeBusiness() {
+        return siegeBusiness;
+    }
+
+    public void setSiegeBusiness(Integer siegeBusiness) {
+        this.siegeBusiness = siegeBusiness;
+    }
+
+    public Integer getSiegeEco() {
+        return siegeEco;
+    }
+
+    public void setSiegeEco(Integer siegeEco) {
+        this.siegeEco = siegeEco;
     }
 
     // Getters et Setters

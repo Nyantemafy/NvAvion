@@ -86,6 +86,9 @@ CREATE TABLE reservation(
    FOREIGN KEY(Id_user) REFERENCES users(id)
 );
 
+ALTER TABLE reservation
+ADD COLUMN paye boolean DEFAULT false;
+
 CREATE TABLE prix_siege_vol_(
    Id_prix_siege_vol_ SERIAL,
    prix_ NUMERIC(15,2)  ,
@@ -146,6 +149,25 @@ ADD CONSTRAINT promotion_id_categorie_age_fkey
 
 ALTER TABLE prix_age_vol 
 ALTER COLUMN id_prix_age_vol TYPE BIGINT;
+
+ALTER TABLE promotion DROP CONSTRAINT promotion_id_categorie_age_fkey;
+ALTER TABLE promotion DROP COLUMN id_categorie_age;
+
+ALTER TABLE promotion ADD COLUMN siege_business integer;
+ALTER TABLE promotion ADD COLUMN siege_eco integer;
+
+ALTER TABLE promotion
+ADD COLUMN id_type_siege integer;
+
+ALTER TABLE promotion
+ADD CONSTRAINT promotion_id_type_siege_fkey
+FOREIGN KEY (id_type_siege) REFERENCES type_siege(id_type_siege);
+
+ALTER TABLE promotion DROP CONSTRAINT promotion_id_type_siege_fkey;
+ALTER TABLE promotion DROP COLUMN id_type_siege;
+
+ALTER TABLE promotion DROP COLUMN date_fin;
+
 
 CREATE VIEW v_user_age_category AS
 SELECT 
@@ -224,3 +246,4 @@ $$ LANGUAGE plpgsql;
 CREATE INDEX idx_prix_age_vol_vol_siege ON prix_age_vol(id_vol, id_type_siege);
 CREATE INDEX idx_prix_age_vol_categorie ON prix_age_vol(id_categorie_age);
 CREATE INDEX idx_users_date_naissance ON users(date_naissance);
+

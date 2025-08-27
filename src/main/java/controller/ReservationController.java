@@ -722,4 +722,36 @@ public class ReservationController {
 
         return dto;
     }
+
+    @POST("payerReservation")
+    @AnnotedMth("payerReservation")
+    public ModelView payerReservation(@Param(name = "id") String idStr, CurrentSession session) {
+        User user = (User) session.get("user");
+        if (user == null || !"ADMIN".equals(user.getRole())) {
+            ModelView mv = new ModelView("views/login.jsp");
+            mv.addObject("error", "Accès non autorisé");
+            return mv;
+        }
+
+        try {
+            Long id = Long.parseLong(idStr);
+            System.out.println("=== Paiement de la réservation ID: " + id + " ===");
+
+            if (reservationService.payerReservation(id)) {
+                session.add("successMessage", "Réservation payée avec succès !");
+            } else {
+                session.add("errorMessage", "Erreur lors du paiement de la réservation");
+            }
+
+        } catch (NumberFormatException e) {
+            session.add("errorMessage", "ID de réservation invalide");
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors du paiement de la réservation:");
+            e.printStackTrace();
+            session.add("errorMessage", "Erreur interne lors du paiement");
+        }
+
+        return new ModelView("reservations");
+    }
+
 }

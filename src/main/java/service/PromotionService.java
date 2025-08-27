@@ -1,14 +1,13 @@
 package service;
 
-import model.*;
-import util.DatabaseUtil;
-import util.DatabaseUtil.QueryResult;
-import java.sql.*;
-import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import model.CategorieAge;
+import model.Promotion;
+import util.DatabaseUtil;
+import util.DatabaseUtil.QueryResult;
 
 public class PromotionService {
 
@@ -20,11 +19,9 @@ public class PromotionService {
         QueryResult queryResult = null;
 
         try {
-            String query = "SELECT p.id_promotion, p.nom, p.date_debut, p.date_fin, " +
-                    "p.reduction_pourcentage_, p.id_vol, p.id_categorie_age, " +
-                    "c.nom as categorie_nom, c.age_min, c.age_max, c.multiplicateur_prix " +
-                    "FROM promotion p " +
-                    "LEFT JOIN categorie_age c ON p.id_categorie_age = c.id_categorie_age";
+            String query = "SELECT p.id_promotion, p.nom, p.date_debut, " +
+                    "p.id_vol, " +
+                    "FROM promotion p ";
 
             queryResult = DatabaseUtil.executeQuery(query);
 
@@ -33,19 +30,7 @@ public class PromotionService {
                 promotion.setIdPromotion(queryResult.resultSet.getLong("id_promotion"));
                 promotion.setNom(queryResult.resultSet.getString("nom"));
                 promotion.setDateDebut(queryResult.resultSet.getDate("date_debut").toLocalDate());
-                promotion.setDateFin(queryResult.resultSet.getDate("date_fin").toLocalDate());
-                promotion.setReductionPourcentage(queryResult.resultSet.getInt("reduction_pourcentage_"));
                 promotion.setIdVol(queryResult.resultSet.getLong("id_vol"));
-
-                if (queryResult.resultSet.getObject("id_categorie_age") != null) {
-                    CategorieAge categorie = new CategorieAge();
-                    categorie.setIdCategorieAge(queryResult.resultSet.getInt("id_categorie_age"));
-                    categorie.setNom(queryResult.resultSet.getString("categorie_nom"));
-                    categorie.setAgeMin(queryResult.resultSet.getInt("age_min"));
-                    categorie.setAgeMax(queryResult.resultSet.getObject("age_max", Integer.class));
-                    categorie.setMultiplicateurPrix(queryResult.resultSet.getBigDecimal("multiplicateur_prix"));
-                    promotion.setCategorieAge(categorie);
-                }
 
                 promotions.add(promotion);
             }
@@ -67,12 +52,9 @@ public class PromotionService {
         QueryResult queryResult = null;
 
         try {
-            String query = "SELECT p.id_promotion, p.nom, p.date_debut, p.date_fin, " +
-                    "p.reduction_pourcentage_, p.id_vol, " +
-                    "c.id_categorie_age, c.nom as categorie_nom, " +
-                    "c.age_min, c.age_max, c.multiplicateur_prix " +
+            String query = "SELECT p.id_promotion, p.nom, p.date_debut, " +
+                    "p.id_vol " +
                     "FROM promotion p " +
-                    "LEFT JOIN categorie_age c ON p.id_categorie_age = c.id_categorie_age " +
                     "WHERE p.id_vol = ? ORDER BY p.date_debut DESC";
 
             queryResult = DatabaseUtil.executeQuery(query, idVol);
@@ -82,20 +64,7 @@ public class PromotionService {
                 promotion.setIdPromotion(queryResult.resultSet.getLong("id_promotion"));
                 promotion.setNom(queryResult.resultSet.getString("nom"));
                 promotion.setDateDebut(queryResult.resultSet.getDate("date_debut").toLocalDate());
-                promotion.setDateFin(queryResult.resultSet.getDate("date_fin").toLocalDate());
-                promotion.setReductionPourcentage(queryResult.resultSet.getInt("reduction_pourcentage_"));
                 promotion.setIdVol(queryResult.resultSet.getLong("id_vol"));
-
-                // Informations sur la catégorie d'âge
-                if (queryResult.resultSet.getObject("id_categorie_age") != null) {
-                    CategorieAge categorie = new CategorieAge();
-                    categorie.setIdCategorieAge(queryResult.resultSet.getInt("id_categorie_age"));
-                    categorie.setNom(queryResult.resultSet.getString("categorie_nom"));
-                    categorie.setAgeMin(queryResult.resultSet.getInt("age_min"));
-                    categorie.setAgeMax(queryResult.resultSet.getObject("age_max", Integer.class));
-                    categorie.setMultiplicateurPrix(queryResult.resultSet.getBigDecimal("multiplicateur_prix"));
-                    promotion.setCategorieAge(categorie);
-                }
 
                 promotions.add(promotion);
             }
@@ -122,17 +91,15 @@ public class PromotionService {
         }
 
         try {
-            String query = "INSERT INTO promotion (nom, date_debut, date_fin, reduction_pourcentage_, id_vol, id_categorie_age) "
-                    +
-                    "VALUES (?, ?, ?, ?, ?, ?)";
+            String query = "INSERT INTO promotion (nom, date_debut, id_vol, siege_business, siege_eco) "
+                    + "VALUES (?, ?, ?, ?, ?)";
 
             Object[] params = {
                     promotion.getNom(),
                     java.sql.Date.valueOf(promotion.getDateDebut()),
-                    java.sql.Date.valueOf(promotion.getDateFin()),
-                    promotion.getReductionPourcentage(),
                     promotion.getIdVol(),
-                    promotion.getCategorieAge() != null ? promotion.getCategorieAge().getIdCategorieAge() : null
+                    promotion.getSiegeBusiness(),
+                    promotion.getSiegeEco()
             };
 
             long generatedId = DatabaseUtil.executeInsertWithGeneratedKey(query, params);
@@ -159,14 +126,13 @@ public class PromotionService {
         }
 
         try {
-            String query = "UPDATE promotion SET nom = ?, date_debut = ?, date_fin = ?, " +
+            String query = "UPDATE promotion SET nom = ?, date_debut = ?, " +
                     "reduction_pourcentage_ = ?, id_categorie_age = ? WHERE id_promotion = ?";
 
             int rowsAffected = DatabaseUtil.executeUpdate(
                     query,
                     promotion.getNom(),
                     java.sql.Date.valueOf(promotion.getDateDebut()),
-                    java.sql.Date.valueOf(promotion.getDateFin()),
                     promotion.getReductionPourcentage(),
                     promotion.getCategorieAge() != null ? promotion.getCategorieAge().getIdCategorieAge() : null,
                     promotion.getIdPromotion());
@@ -223,11 +189,10 @@ public class PromotionService {
 
         QueryResult queryResult = null;
         try {
-            String query = "SELECT p.id_promotion, p.nom, p.date_debut, p.date_fin, " +
-                    "p.reduction_pourcentage_, p.id_vol, c.id_categorie_age, " +
+            String query = "SELECT p.id_promotion, p.nom, p.date_debut, " +
+                    "p.id_vol, " +
                     "c.nom as categorie_nom, c.age_min, c.age_max, c.multiplicateur_prix " +
                     "FROM promotion p " +
-                    "LEFT JOIN categorie_age c ON p.id_categorie_age = c.id_categorie_age " +
                     "WHERE p.id_promotion = ?";
 
             queryResult = DatabaseUtil.executeQuery(query, idPromotion);
@@ -237,8 +202,6 @@ public class PromotionService {
                 promotion.setIdPromotion(queryResult.resultSet.getLong("id_promotion"));
                 promotion.setNom(queryResult.resultSet.getString("nom"));
                 promotion.setDateDebut(queryResult.resultSet.getDate("date_debut").toLocalDate());
-                promotion.setDateFin(queryResult.resultSet.getDate("date_fin").toLocalDate());
-                promotion.setReductionPourcentage(queryResult.resultSet.getInt("reduction_pourcentage_"));
                 promotion.setIdVol(queryResult.resultSet.getLong("id_vol"));
 
                 if (queryResult.resultSet.getObject("id_categorie_age") != null) {

@@ -484,10 +484,9 @@ public class VolController {
     @AnnotedMth("createPromotion")
     public ModelView createPromotion(
             @Param(name = "nom") String nomPromotion,
-            @Param(name = "reductionPourcentage") String tauxStr,
             @Param(name = "dateDebut") String dateDebutStr,
-            @Param(name = "dateFin") String dateFinStr,
-            @Param(name = "categorieAge") String categorieAgeIdStr,
+            @Param(name = "siegeBusiness") String siegeBusinessStr,
+            @Param(name = "siegeEco") String siegeEcoStr,
             @Param(name = "idVol") String volIdStr,
             CurrentSession session) {
 
@@ -499,35 +498,27 @@ public class VolController {
         }
 
         try {
-            Integer taux = Integer.parseInt(tauxStr);
             LocalDate dateDebut = LocalDate.parse(dateDebutStr);
-            LocalDate dateFin = LocalDate.parse(dateFinStr);
             Long volId = Long.parseLong(volIdStr);
 
-            // Gestion de la catégorie d'âge (peut être null)
-            Long categorieAgeId = null;
-            if (categorieAgeIdStr != null && !categorieAgeIdStr.isEmpty()) {
-                categorieAgeId = Long.parseLong(categorieAgeIdStr);
-            }
+            Integer siegeBusiness = siegeBusinessStr != null && !siegeBusinessStr.isEmpty()
+                    ? Integer.parseInt(siegeBusinessStr)
+                    : null;
+
+            Integer siegeEco = siegeEcoStr != null && !siegeEcoStr.isEmpty()
+                    ? Integer.parseInt(siegeEcoStr)
+                    : null;
 
             Promotion promo = new Promotion();
             promo.setNom(nomPromotion);
-            promo.setReductionPourcentage(taux);
             promo.setDateDebut(dateDebut);
-            promo.setDateFin(dateFin);
             promo.setIdVol(volId);
-
-            // Création de l'objet CategorieAge si un ID est fourni
-            if (categorieAgeId != null) {
-                CategorieAge categorieAge = new CategorieAge();
-                categorieAge.setIdCategorieAge(categorieAgeId.intValue());
-                promo.setCategorieAge(categorieAge);
-            }
+            promo.setSiegeBusiness(siegeBusiness);
+            promo.setSiegeEco(siegeEco);
 
             promotionService.createPromotion(promo);
             session.add("successMessage", "Promotion créée avec succès !");
 
-            // Redirection vers les détails du vol plutôt que vers la liste des promotions
             return new ModelView("/volDetails?id=" + volId);
 
         } catch (Exception e) {
@@ -536,11 +527,6 @@ public class VolController {
             mv.addObject("error", "Erreur: " + e.getMessage());
             mv.addObject("user", user);
             mv.addObject("volId", Long.parseLong(volIdStr));
-
-            // Recharger les catégories d'âge pour le formulaire
-            List<CategorieAge> categoriesAge = categorieAgeService.findAllCategories();
-            mv.addObject("categoriesAge", categoriesAge);
-
             return mv;
         }
     }
